@@ -1,0 +1,16 @@
+{
+  "name": "world-identity-root",
+  "version": "1.0.0",
+  "description": "Root for World Identity Platform",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend-registrar\" \"npm run dev --prefix lite-marketplace/frontend-v2\"",
+    "install-all": "npm install --prefix backend-registrar && npm install --prefix lite-marketplace/frontend-v2"
+  },
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

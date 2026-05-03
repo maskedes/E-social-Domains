@@ -1,0 +1,51 @@
+{
+  "identities": {
+    "E-sozialz.kenya": {
+      "name": "E-sozialz",
+      "extension": "kenya",
+      "claimedAt": "2026-05-03T09:42:10.563Z",
+      "bio": "Welcome to my kenya space!",
+      "theme": "#3b82f6",
+      "social": "",
+      "verified": false
+    },
+    "edward.uganda": {
+      "name": "edward",
+      "extension": "uganda",
+      "regDate": "2026-05-03T10:33:50.004Z",
+      "expDate": "2027-05-03T10:33:50.004Z",
+      "privacy": true,
+      "records": [
+        {
+          "type": "A",
+          "name": "@",
+          "value": "127.0.0.1"
+        }
+      ]
+    },
+    "eddy.china": {
+      "name": "eddy",
+      "extension": "china",
+      "regDate": "2026-05-03T10:52:54.302Z",
+      "expDate": "2027-05-03T10:52:54.302Z",
+      "lastAudit": "2026-05-03T10:52:54.302Z",
+      "records": [
+        {
+          "type": "A",
+          "name": "@",
+          "value": "127.0.0.1",
+          "ttl": 3600
+        },
+        {
+          "type": "NS",
+          "name": "@",
+          "value": "ns1.esocialz.com",
+          "ttl": 86400
+        }
+      ]
+    }
+  },
+  "stats": {
+    "total_identities": 1
+  }
+}

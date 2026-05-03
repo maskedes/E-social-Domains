@@ -1,0 +1,15 @@
+options {
+    directory "/var/cache/bind";
+
+    // Disable recursion for security (Authoritative only)
+    recursion no;
+    allow-query { any; };
+
+    dnssec-validation auto;
+    listen-on-v6 { any; };
+
+    // Specify where to write logs
+    dump-file "/var/log/bind/cache_dump.db";
+    statistics-file "/var/log/bind/named_stats.txt";
+    memstatistics-file "/var/log/bind/named_mem_stats.txt";
+};

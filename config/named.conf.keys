@@ -1,0 +1,4 @@
+key "marketplace-key" {
+    algorithm hmac-sha256;
+    secret "C2lS8/7E+T4z/5m8+qXG5wV6Y7Y8Z9A0B1C2D3E4F5G="; // Example secret
+};

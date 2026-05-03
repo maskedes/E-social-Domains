@@ -1,0 +1,9 @@
+//
+// Real Domain Configurations (Subdomain Marketplace)
+//
+
+zone "esocialz.com" {
+    type master;
+    file "/var/lib/bind/db.esocialz.com"; // Moved to data directory for dynamic updates
+    allow-update { key "marketplace-key"; };
+};
