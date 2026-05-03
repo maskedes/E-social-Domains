@@ -12,7 +12,8 @@ import { DomainListScreen } from './screens/DomainListScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AccountScreen } from './screens/AccountScreen';
 import { EditProfileScreen } from './screens/EditProfileScreen';
-import { LanguageProvider, useLanguage } from './contexts/LanguageContext';
+import { LanguageProvider } from './contexts/LanguageProvider';
+import { useLanguage } from './contexts/LanguageContext';
 import styles from './AppLayout.module.css';
 
 const App: React.FC = () => {
