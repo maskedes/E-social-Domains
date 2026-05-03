@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  bind9:
+    image: internetsystemsconsortium/bind9:9.18
+    container_name: bind9
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+    volumes:
+      - ./config:/etc/bind
+      - ./logs:/var/log/bind
+      - ./data:/var/lib/bind
+    restart: always
+
+  nginx:
+    image: nginx:latest
+    container_name: nginx-router
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    restart: always
+
+  portal-backend:
+    build: ./portal/backend
+    container_name: portal-api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./portal/backend:/app
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+
+  postgres:
+    image: postgres:15
+    container_name: registry-db
+    environment:
+      POSTGRES_DB: registry_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+volumes:
+  postgres_data:
