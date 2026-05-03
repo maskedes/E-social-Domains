@@ -1,6 +1,6 @@
-# World Identity Platform - Modular Architecture
+# E-social-Domains (World Identity Platform)
 
-This project has been separated into four distinct layers for redundancy, scalability, and real-world compliance.
+This project provides a modular architecture for managing domains, separated into four distinct layers for redundancy, scalability, and real-world compliance.
 
 ## 📁 Architecture Overview
 
@@ -31,3 +31,4 @@ This project has been separated into four distinct layers for redundancy, scalab
 - **Redundancy**: Architecture supports multiple DNS providers.
 - **Audit Logging**: Every DNS change is tracked in the Registry.
 - **Real-world Sync**: Integration with Cloudflare for live domain management.
+- **Free Domains**: Supports registration of permanent free domains.
