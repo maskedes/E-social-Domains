@@ -820,7 +820,8 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr); /* equal columns → all controls identical width */
   gap: 18px;
-  padding: 14px 18px 18px;
+  padding: 12px 0 4px;
+  align-items: start;
 }
 
 .stepBox {
@@ -852,9 +853,9 @@
   overflow: hidden;
 }
 
-/* Controls align on one row, identical size: full column width, 40px tall */
+/* Controls start on the same row in every box, identical size: full column width, 40px tall */
 .stepControl {
-  margin-top: auto; /* pins to the bottom of every box → same vertical position */
+  margin-top: 12px;
 }
 
 .stepControl .ovBtn,

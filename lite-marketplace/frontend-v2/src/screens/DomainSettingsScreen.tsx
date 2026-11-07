@@ -1229,7 +1229,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           Here the owner makes <strong>one change</strong>: set the domain's nameservers to EDES.
           From then on EDES hosts the whole zone, and every record — now and later — is written automatically.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 10, marginBottom: 14, alignItems: 'start' }}>
           <div style={{ padding: '10px 4px' }}>
             <div className={styles.iconLabel}>1. Check</div>
             <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>✅ Available — zones EDES serves can always be hosted.</p>
