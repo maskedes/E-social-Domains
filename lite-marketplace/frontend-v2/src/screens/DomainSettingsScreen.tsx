@@ -116,6 +116,64 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const [purpose, setPurpose] = useState('verify');
   const [dnsChecking, setDnsChecking] = useState(false);
   const [dnsResult, setDnsResult] = useState('');
+  // ── Verify a service: publish another service's TXT record ──
+  // The token always comes from the service that asks for it; the record is
+  // written exactly as supplied and values already at that name stay.
+  const VERIFY_SERVICES = [
+    { id: 'workos', name: 'WorkOS (single sign-on / domain claims)', host: '@', prefix: 'verification_token=', placeholder: 'the verification_token WorkOS returns for this domain', handle: false },
+    { id: 'gsc', name: 'Google Search Console (Domain property)', host: '@', prefix: 'google-site-verification=', placeholder: 'the TXT value Search Console gives this domain', handle: false },
+    { id: 'bluesky', name: 'Bluesky handle', host: '_atproto', prefix: 'did=', placeholder: 'did:plc:… (your account’s DID)', handle: true },
+  ];
+  const [verifyService, setVerifyService] = useState('');
+  const [verifyToken, setVerifyToken] = useState('');
+  const [verifyHandle, setVerifyHandle] = useState('');
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyResult, setVerifyResult] = useState('');
+  const [verifyPublished, setVerifyPublished] = useState<{ host: string; value: string } | null>(null);
+
+  const handleVerifyPublish = async () => {
+    const svc = VERIFY_SERVICES.find(s => s.id === verifyService);
+    if (!svc || !verifyToken.trim() || !displayDomain) return;
+    setVerifyBusy(true);
+    setVerifyResult('');
+    try {
+      const host = svc.id === 'bluesky'
+        ? `_atproto.${(verifyHandle.trim() || displayDomain).toLowerCase().replace(/\.$/, '')}`
+        : displayDomain; // @ — the domain's own name
+      const value = `${svc.prefix}${verifyToken.trim()}`;
+      // the values already at that name stay: we only add this TXT record
+      await api('/records', { method: 'POST', body: JSON.stringify({ type: 'TXT', name: host, content: value, ttl: 3600, proxied: false }) });
+      setVerifyPublished({ host, value });
+      setVerifyResult(`✅ TXT written at ${host}, value kept exactly as supplied:\n    ${value}\nThe service that issued the token runs its own check — WorkOS polls periodically, Search Console keeps checking the token stays, and Bluesky resolves the handle text record.`);
+    } catch (e) {
+      setVerifyResult(`❌ ${(e as Error).message}`);
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
+
+  const handleVerifyCheckNow = async () => {
+    if (!verifyPublished) return;
+    setVerifyBusy(true);
+    try {
+      const r = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(verifyPublished.host)}&type=TXT`);
+      const j = await r.json();
+      const values = (j.Answer || []).filter((a: any) => a.type === 16)
+        .map((a: any) => String(a.data).replace(/"/g, ''));
+      if (values.includes(verifyPublished.value)) {
+        setVerifyResult(`✅ ${verifyPublished.host} resolves with the exact value — verify with the issuing service now.\n    ${values.length} TXT value(s) at this name (all preserved).`);
+      } else {
+        setVerifyResult((zone.status !== 'active'
+          ? `⏳ Not visible yet — the record is written; public DNS only answers for this domain once its delegation is live (zone status: ${zone.status}). Check again after that.`
+          : `⏳ Not visible yet — DNS can take minutes to hours to propagate. The record is written; check again in a bit.`)
+          + `\n    (Looking for: ${verifyPublished.value})`);
+      }
+    } catch (e) {
+      setVerifyResult(`❌ Lookup failed: ${(e as Error).message}`);
+    } finally {
+      setVerifyBusy(false);
+    }
+  };
 
   const fmt = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const toDate = (v: any): Date | null => {
@@ -557,8 +615,10 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   // ── Managed DNS (DNS hosting): Check → Start → Switch → Active ──
   // One nameserver change at the registrar; after the delegation turns the
   // zone active, every later record change is written automatically.
+  // Registry delegation states: awaiting_delegation / active / failed.
   const [mdnsChecking, setMdnsChecking] = useState(false);
   const [mdnsPhase, setMdnsPhase] = useState<'start' | 'switch' | 'active'>('start');
+  const [mdnsState, setMdnsState] = useState<'awaiting_delegation' | 'active' | 'failed'>('awaiting_delegation');
   const [mdnsResult, setMdnsResult] = useState('');
 
   const handleMdnsCheck = async () => {
@@ -570,17 +630,42 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       const j = await r.json();
       const published = (j.Answer || []).filter((a: any) => a.type === 2).map((a: any) => a.data.replace(/\.$/, '').toLowerCase());
       const ours = realNS.map((n: string) => n.trim().toLowerCase()).filter(Boolean);
-      if (published.length && ours.length && published.every(p => ours.includes(p))) {
-        setMdnsPhase('active');
-        setMdnsResult(`✅ Active — the parent publishes our nameservers (${published.join(', ')}). The zone is live and verified; every record change from now on is written automatically.`);
+      const key = `mdns:${displayDomain}`;
+      const allOurs = published.length > 0 && ours.length > 0 && published.every(p => ours.includes(p));
+      const someOurs = published.some(p => ours.includes(p));
+
+      const prev = (() => { try { return JSON.parse(localStorage.getItem(key) || '{}'); } catch { return {}; } })() as { state?: string; since?: string };
+      let state: 'awaiting_delegation' | 'active' | 'failed' = 'awaiting_delegation';
+      let text = '';
+      if (allOurs) {
+        state = 'active';
+        text = `✅ Active — every nameserver the parent lists is ours (${published.join(', ')}). The zone is live and verified; every record change from now on is written automatically. Re-checked every 6 hours.`;
+      } else if (published.length === 0) {
+        text = `⏳ Awaiting delegation — the zone holds the records; the domain still uses other nameservers (none published yet). Nothing changes for anyone until the nameservers are replaced at the registrar. Checked every few minutes for the first day, hourly after.`;
+      } else if (someOurs) {
+        // partial: resolvers that pick one of the extras still get old answers
+        const extras = published.filter(p => !ours.includes(p));
+        text = `⏳ Awaiting delegation — some of our nameservers and some others are listed (${published.join(', ')}). The zone stays awaiting_delegation until the extras are removed: resolvers that pick one of them (${extras.join(', ')}) would still get the old answers.`;
       } else {
-        setMdnsPhase('switch');
-        setMdnsResult(
-          published.length
-            ? `⏳ Switching — the parent currently publishes: ${published.join(', ')}. Nothing changes for anyone until the nameservers are replaced at the registrar.`
-            : `⏳ Switching — no delegation published yet (NXDOMAIN/NOANSWER). Nothing changes for anyone until the nameservers are replaced at the registrar.`
-        );
+        text = `⏳ Awaiting delegation — the parent still publishes other nameservers (${published.join(', ')}). The domain still uses other nameservers until they are replaced at the registrar.`;
       }
+      // failed: the switch didn't happen within 14 days of the zone being
+      // created, or the nameservers moved away after being active. A failed
+      // zone is still checked and turns active as soon as the delegation appears.
+      if (!allOurs) {
+        const since = prev.since ? new Date(prev.since).getTime() : 0;
+        if (prev.state === 'active') {
+          state = 'failed';
+          text = `⚠️ Failed — the nameservers later moved away from ours (the parent lists ${published.length ? published.join(', ') : 'nothing'}). The zone keeps being checked twice a day and turns active as soon as the delegation points back at ours.`;
+        } else if (since && Date.now() - since > 14 * 24 * 3600 * 1000) {
+          state = 'failed';
+          text = `⚠️ Failed — the switch didn't happen within 14 days of the zone being created (${new Date(since).toLocaleDateString()}). The first warning says which nameservers to replace: ${published.length ? published.join(', ') : 'none published yet'}. The zone keeps being checked twice a day and turns active as soon as the delegation appears.`;
+        }
+      }
+      localStorage.setItem(key, JSON.stringify({ state, since: state === 'active' ? new Date().toISOString() : (prev.since ?? new Date().toISOString()) }));
+      setMdnsState(state);
+      setMdnsPhase(state === 'active' ? 'active' : 'switch');
+      setMdnsResult(text);
     } catch (e) {
       setMdnsResult(`❌ Lookup failed: ${(e as Error).message}`);
     } finally {
@@ -1029,15 +1114,65 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
                   </div>
                 </div>
                 <div className={styles.stepBox}>
-                  <div className={styles.stepTitle}>2. Connect a service</div>
-                  <p className={styles.stepDesc}>
-                    Have records from another provider? Configure DNS and paste them there.
-                  </p>
-                  <div className={styles.stepControl}>
-                    <button className={styles.ovBtn} onClick={() => { document.querySelector('input[placeholder="subdomain"]')?.focus(); }}>
-                      Configure DNS
-                    </button>
-                  </div>
+                  <div className={styles.stepTitle}>2. {purpose === 'verify' ? 'Publish the verification TXT' : 'Connect a service'}</div>
+                  {purpose === 'verify' ? (
+                    <>
+                      <p className={styles.stepDesc}>
+                        Copy the token the service gives you for this domain. We write it exactly as supplied — values already at that name stay.
+                      </p>
+                      <div className={styles.stepControl} style={{ display: 'grid', gap: 8 }}>
+                        <select
+                          className={styles.stepSelect}
+                          value={verifyService}
+                          onChange={(e) => { setVerifyService(e.target.value); setVerifyToken(''); setVerifyResult(''); }}
+                        >
+                          <option value="">— Choose a service —</option>
+                          {VERIFY_SERVICES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                        {verifyService === 'bluesky' && (
+                          <input
+                            className={styles.stepSelect}
+                            placeholder={`handle (defaults to ${displayDomain || 'domain'})`}
+                            value={verifyHandle}
+                            onChange={(e) => setVerifyHandle(e.target.value)}
+                          />
+                        )}
+                        <input
+                          className={styles.stepSelect}
+                          placeholder={VERIFY_SERVICES.find(s => s.id === verifyService)?.placeholder ?? 'choose a service first'}
+                          value={verifyToken}
+                          onChange={(e) => setVerifyToken(e.target.value)}
+                          disabled={!verifyService}
+                        />
+                        <button
+                          className={styles.ovBtn}
+                          onClick={handleVerifyPublish}
+                          disabled={verifyBusy || !verifyService || !verifyToken.trim()}
+                        >
+                          {verifyBusy ? 'Publishing…' : 'Publish TXT record'}
+                        </button>
+                        {verifyPublished && (
+                          <button className={styles.ovBtn} onClick={handleVerifyCheckNow} disabled={verifyBusy}>
+                            {verifyBusy ? 'Checking…' : 'Check now'}
+                          </button>
+                        )}
+                      </div>
+                      {verifyResult && (
+                        <pre style={{ margin: '10px 0 0', fontSize: 12, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)' }}>{verifyResult}</pre>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className={styles.stepDesc}>
+                        Have records from another provider? Configure DNS and paste them there.
+                      </p>
+                      <div className={styles.stepControl}>
+                        <button className={styles.ovBtn} onClick={() => { document.querySelector('input[placeholder="subdomain"]')?.focus(); }}>
+                          Configure DNS
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <div className={styles.stepBox}>
                   <div className={styles.stepTitle}>3. Check DNS</div>
@@ -1142,8 +1277,15 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           <button className={styles.ovBtn} onClick={handleMdnsCheck} disabled={mdnsChecking || loading}>
             {mdnsChecking ? 'Checking…' : 'Check managed DNS'}
           </button>
-          {mdnsResult && <span className={styles.subText} style={{ fontSize: 12 }}>{mdnsResult}</span>}
+          <span style={{
+            fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 20,
+            background: mdnsState === 'active' ? '#dcfce7' : mdnsState === 'failed' ? '#fee2e2' : '#fef9c3',
+            color: mdnsState === 'active' ? '#166534' : mdnsState === 'failed' ? '#991b1b' : '#854d0e',
+          }}>
+            Delegation: {mdnsState}
+          </span>
         </div>
+        {mdnsResult && <p className={styles.subText} style={{ fontSize: 12, marginTop: 10 }}>{mdnsResult}</p>}
       </div>
 
       {/* Nameservers — DigitalPlat-style realtime editor */}
