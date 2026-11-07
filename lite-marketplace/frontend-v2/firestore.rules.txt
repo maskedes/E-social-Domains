@@ -1,0 +1,26 @@
+{
+  "rules": {
+    ".read": "auth != null",
+    ".write": "auth != null",
+    
+    "users": {
+      ".read": "auth != null && auth.uid == data.uid",
+      ".write": "auth != null && auth.uid == newData.uid",
+      
+      "profile": {
+        ".read": "auth != null && auth.uid == data.uid",
+        ".write": "auth != null && auth.uid == newData.uid"
+      },
+      
+      "walletTransactions": {
+        ".read": "auth != null && auth.uid == data.parent().uid",
+        ".write": "auth != null"
+      }
+    },
+    
+    "apiKeys": {
+      ".read": "auth != null && auth.uid == data.uid",
+      ".write": "auth != null"
+    }
+  }
+}

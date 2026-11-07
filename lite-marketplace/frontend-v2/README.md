@@ -43,7 +43,7 @@ export default defineConfig([
 ])
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
@@ -71,3 +71,24 @@ export default defineConfig([
   },
 ])
 ```
+
+## Free services and hosting
+
+This UI is built using free-friendly services and works well with the Firebase Spark plan.
+
+- Firebase Authentication: email/password and anonymous sign-in work on the free Spark tier.
+- Firebase Firestore: free usage for development and low-traffic testing.
+- Vite: local development server and production build tooling are free.
+- Recommended free hosting options:
+  - Vercel (Hobby)
+  - Netlify (Free tier)
+  - Firebase Hosting (Free Spark tier)
+
+### Getting started
+
+1. Copy `.env.example` to `.env`.
+2. Fill in your Firebase project credentials.
+3. Run `npm install` and `npm run dev`.
+4. Build for production with `npm run build`.
+
+> For a complete free-stack setup, use Firebase Spark for auth and Firestore, and deploy the built site to Vercel or Netlify.

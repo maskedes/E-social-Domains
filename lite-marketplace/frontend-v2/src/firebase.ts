@@ -1,13 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
-import { 
-    getAuth, 
-    GoogleAuthProvider, 
-    FacebookAuthProvider, 
-    GithubAuthProvider, 
-    OAuthProvider, 
-    TwitterAuthProvider 
-} from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -20,13 +13,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
-
-export const providers = {
-    google: new GoogleAuthProvider(),
-    facebook: new FacebookAuthProvider(),
-    github: new GithubAuthProvider(),
-    apple: new OAuthProvider('apple.com'),
-    microsoft: new OAuthProvider('microsoft.com'),
-    twitter: new TwitterAuthProvider()
-};
+// Database ID "default" (named database) — NOT the implicit "(default)" database,
+// which does not exist in this project. See console URL: /firestore/databases/default/data.
+export const db = getFirestore(app, "default");

@@ -4,7 +4,7 @@ import { translations, Language, TranslationKey } from '../translations';
 export interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
 
 export const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -17,6 +17,15 @@ export const useLanguage = () => {
   return context;
 };
 
-export const translate = (language: Language, key: TranslationKey): string => {
-  return translations[language][key] || translations['en'][key] || key;
+const interpolate = (text: string, params?: Record<string, string | number>): string => {
+  if (!params) return text;
+  return Object.keys(params).reduce((result, key) => {
+    const value = String(params[key]);
+    return result.replace(new RegExp(`{${key}}`, 'g'), value);
+  }, text);
+};
+
+export const translate = (language: Language, key: TranslationKey, params?: Record<string, string | number>): string => {
+  const value = translations[language][key] || translations['en'][key] || key;
+  return interpolate(value, params);
 };

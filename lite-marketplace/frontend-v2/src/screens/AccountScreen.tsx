@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { User, Mail, Calendar, ShieldCheck } from 'lucide-react';
+import { User, Mail, Calendar, ShieldCheck, Wallet } from 'lucide-react';
 import styles from './Screens.module.css';
+import { WalletSection } from '../components/WalletSection';
+import { ChangePasswordModal } from '../components/PasswordModal';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface AccountProps {
@@ -11,6 +13,7 @@ interface AccountProps {
 
 export const AccountScreen: React.FC<AccountProps> = ({ user, setScreen }) => {
   const { t } = useLanguage();
+  const [pwModal, setPwModal] = useState(false);
 
   if (!user) return null;
 
@@ -24,7 +27,26 @@ export const AccountScreen: React.FC<AccountProps> = ({ user, setScreen }) => {
         <h1 className={styles.pageTitle}>{t('account')}</h1>
       </div>
 
-      <div className={styles.card} style={{ maxWidth: '600px' }}>
+      <div className={styles.centeredAccount}>
+        <div className={styles.accountAvatarRow}>
+          {user.photoURL ? (
+            <img src={user.photoURL} alt="avatar" className={styles.accountAvatar} />
+          ) : (
+            <div className={styles.accountAvatar}>
+              {(user.displayName || user.email?.split('@')[0] || 'U').slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        {/* ── Wallet ──────────────────────────────────────────────── */}
+        <div className={styles.walletTitleRow}>
+          <Wallet size={20} style={{ color: '#22c55e' }} />
+          <span>{t('wallet')}</span>
+        </div>
+        <WalletSection user={user} />
+
+        <div className={styles.divider} style={{ margin: '28px 0 8px' }} />
+
         <div className={styles.cardTitle}>
           <ShieldCheck size={20} style={{ color: 'var(--accent-primary)' }} />
           {t('profileDetails')}
@@ -70,11 +92,19 @@ export const AccountScreen: React.FC<AccountProps> = ({ user, setScreen }) => {
           >
             {t('editProfile')}
           </button>
-          <button className={styles.buttonOutline} style={{ width: 'auto', padding: '10px 24px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
-            Change Password
+          <button
+            className={styles.buttonOutline}
+            style={{ width: 'auto', padding: '10px 24px', border: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}
+            onClick={() => user && setPwModal(true)}
+          >
+            {t('changePassword')}
           </button>
         </div>
       </div>
+
+      {user && pwModal && (
+        <ChangePasswordModal user={user} onClose={() => setPwModal(false)} />
+      )}
     </div>
   );
 };

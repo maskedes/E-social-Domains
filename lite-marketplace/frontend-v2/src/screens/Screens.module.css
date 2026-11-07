@@ -19,6 +19,12 @@
 
 .pageHeader {
   margin-bottom: 32px;
+  text-align: center;
+}
+
+.pageHeaderCentered {
+  text-align: center;
+  margin-bottom: 8px;
 }
 
 .pageTitle {
@@ -136,6 +142,14 @@
   box-shadow: 0 10px 15px -3px var(--shadow-primary);
 }
 
+.statCardClickable {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  width: 100%;
+}
+
 .statLabel {
   font-size: 14px;
   color: var(--text-secondary);
@@ -153,10 +167,297 @@
   -webkit-text-fill-color: transparent;
 }
 
+.statSubLabel {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+
+/* Cardless centered profile editor */
+.centeredProfile {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  min-height: 55vh;
+  justify-content: center;
+  gap: 20px;
+  animation: emptyIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.centeredProfile .cardTitle {
+  text-align: center;
+  justify-content: center;
+}
+
+.centeredProfile .buttonPrimary {
+  align-self: center;
+}
+
+/* Cardless centered form (Register etc.) */
+.centeredForm {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 55vh;
+  justify-content: center;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  animation: emptyIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Register: flat availability row — no card box */
+.registerRow {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.ackList {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.ackItem {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ackItem input {
+  margin-top: 2px;
+  accent-color: var(--accent-primary);
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 14px 12px 40px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: 12px center;
+}
+
+.searchInput:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+}
+
+.compactSelect {
+  flex: 0 0 150px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 12px 32px 12px 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+.compactSelect option {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.checkButton {
+  flex: none;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.checkButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.25);
+}
+
+.checkButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.resultLine {
+  font-size: 14px;
+  text-align: center;
+}
+
+.resultOk {
+  color: #16a34a;
+}
+
+.resultBad {
+  color: #dc2626;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.centeredForm .input,
+.centeredForm .select {
+  width: 100%;
+}
+
+.centeredForm .buttonPrimary {
+  margin-top: 8px;
+}
+
+/* Cardless, perfectly centered empty/placeholder states */
+.centeredEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 65vh;
+  max-width: 520px;
+  margin: 0 auto;
+  gap: 12px;
+  animation: emptyIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes emptyIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.emptyIconBadge {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-primary);
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(37, 99, 235, 0.14));
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 4px 0 0;
+}
+
+.emptyText {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
 .subText {
   font-size: 14px;
   color: var(--text-secondary);
   margin-top: 4px;
+}
+
+/* Account avatar */
+.accountAvatarRow {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+/* Cardless centered account (profile + wallet) */
+.centeredAccount {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  gap: 6px;
+  animation: emptyIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Wallet block heading (section label + icon, centered) */
+.walletTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 28px 0 2px;
+}
+
+/* Cardless settings layout (Settings screen) */
+.settingsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  animation: emptyIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 12px 0 2px;
+}
+
+.accountAvatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  box-shadow: 0 8px 24px var(--shadow-primary);
+  border: 3px solid var(--bg-primary);
 }
 
 .cardTitle {
@@ -290,6 +591,472 @@
   margin-bottom: 16px;
   padding-bottom: 16px;
   border-bottom: 1px solid var(--border-color);
+}
+
+/* ── DigitalPlat-style filter toolbar (search / status / expiry / groups / tag / CSV) ── */
+.filterBar {
+  background: var(--card-bg, var(--bg-secondary));
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 4px;
+}
+
+.filterRow {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filterBar .nsInput {
+  min-height: 42px;
+}
+
+/* ── DigitalPlat-style domain table: flat separated rows, no card ── */
+.domainTable {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.domainTableHeader,
+.domainRow {
+  display: flex;
+  align-items: center;
+  padding: 14px 12px;
+}
+
+.domainTableHeader {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.domainRow {
+  border-bottom: 1px solid var(--border-color);
+  transition: background 0.15s ease;
+}
+
+.domainRow:hover {
+  background: rgba(59, 130, 246, 0.04);
+}
+
+.domainRow:last-child {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dCheck {
+  flex: 0 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dCheck input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent-primary, #2563eb);
+  cursor: pointer;
+}
+
+.dNameCell {
+  flex: 1.6;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 14px;
+}
+
+.dName {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* Header variant: name + sort arrow inline */
+.dNameHeader {
+  flex: 1.6;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dName:hover {
+  text-decoration: underline;
+}
+
+.dSub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dColStatus {
+  flex: 0.7;
+}
+
+.dColDate {
+  flex: 0.8;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.dColRenewal {
+  flex: 1.1;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dColDns {
+  flex: 0.9;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dDnsConfigured {
+  color: #166534;
+  font-weight: 600;
+}
+
+.dColLabels {
+  flex: 0.9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.dLabelsBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.dLabelsBtn:hover {
+  color: var(--accent-primary, #2563eb);
+}
+
+.dSortArrow {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Responsive: hide renewal + labels on narrow screens */
+@media (max-width: 900px) {
+  .dColRenewal,
+  .dColLabels {
+    display: none;
+  }
+}
+
+/* ── Domain overview + setup wizard (DomainSettingsScreen) ── */
+.overviewGrid {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.overviewGrid > div {
+  min-width: 140px;
+}
+
+.ovLabel {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.ovValue {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ovBtn,
+.ovBtnPrimary {
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-primary);
+  transition: background 0.15s ease;
+}
+
+.ovBtn:hover {
+  background: var(--bg-secondary, #f1f5f9);
+}
+
+.ovBtnPrimary {
+  background: var(--accent-primary, #2563eb);
+  border-color: var(--accent-primary, #2563eb);
+  color: #fff;
+}
+
+.ovBtnPrimary:hover {
+  filter: brightness(1.08);
+}
+
+.setupCard {
+  margin-top: 18px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  background: transparent;
+}
+
+.setupSteps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* equal columns → all controls identical width */
+  gap: 18px;
+  padding: 14px 18px 18px;
+}
+
+.stepBox {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Titles share one fixed line so desc text starts at the same height */
+.stepTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  height: 20px;
+  line-height: 20px;
+  margin-bottom: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* Descriptions share the same 2-line block: same width, height & position */
+.stepDesc {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  min-height: 36px; /* exactly 2 lines */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Controls align on one row, identical size: full column width, 40px tall */
+.stepControl {
+  margin-top: auto; /* pins to the bottom of every box → same vertical position */
+}
+
+.stepControl .ovBtn,
+.stepSelect {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Dropdown styled like the buttons: same border, height and text style */
+.stepSelect {
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+  transition: border-color 0.15s ease;
+}
+
+.stepSelect:hover,
+.stepSelect:focus {
+  border-color: var(--accent-primary, #2563eb);
+  outline: none;
+}
+
+.stepControl .ovBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 800px) {
+  .setupSteps {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Nameserver editor (DomainSettingsScreen, DigitalPlat-style) ── */
+.nsRecommended {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-secondary, #f8fafc);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 14px 18px;
+}
+
+.nsRecIcon {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: var(--accent-primary, #2563eb);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nsRecTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nsBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #166534;
+  background: #dcfce7;
+  border-radius: 12px;
+  padding: 2px 10px;
+}
+
+.nsRecDesc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.nsRecNs {
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-primary);
+  margin-top: 4px;
+}
+
+.nsUseBtn {
+  flex-shrink: 0;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent-primary, #2563eb);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nsUseBtn:hover {
+  filter: brightness(1.08);
+}
+
+.nsUseBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 2-column NS input grid, uniform field sizes */
+.nsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+
+.nsField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nsLabel {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.nsInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-primary, #fff);
+  color: var(--text-primary);
+  font-size: 13.5px;
+  font-family: monospace;
+  transition: border-color 0.15s ease;
+}
+
+.nsInput::placeholder {
+  color: #94a3b8;
+  font-family: inherit;
+}
+
+.nsInput:focus {
+  outline: none;
+  border-color: var(--accent-primary, #2563eb);
+}
+
+.nsInput:disabled {
+  opacity: 0.6;
+}
+
+.nsActionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.nsHint {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+/* In-zone NS / glue-record warning: solid yellow, text always fully visible */
+.glueWarn {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #211a00; /* near-black — maximum contrast on yellow */
+  background: #ffeb3b; /* pure yellow, opaque */
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 700px) {
+  .nsGrid {
+    grid-template-columns: 1fr;
+  }
+  .nsRecommended {
+    flex-wrap: wrap;
+  }
 }
 
 .buttonOutline {

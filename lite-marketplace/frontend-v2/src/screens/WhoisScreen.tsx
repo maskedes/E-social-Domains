@@ -21,7 +21,7 @@ export const WhoisScreen: React.FC = () => {
                         <input 
                             type="text" 
                             className={styles.input} 
-                            placeholder="example.us.kg, foo.dpdns.org..." 
+                            placeholder="elloways.esocialzdomains.eu.org" 
                             style={{ paddingLeft: '48px' }}
                             value={domain}
                             onChange={(e) => setDomain(e.target.value)}
@@ -32,8 +32,8 @@ export const WhoisScreen: React.FC = () => {
                     </button>
                 </div>
                 <p className={styles.infoText} style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    Queries like <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>whois example.dpdns.org</code> may not work directly.
-                    <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>whois example.dpdns.org</code>
+                    Queries like <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>whois elloways.esocialzdomains.eu.org</code> may not work directly.
+                    <code style={{ background: '#f1f5f9', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>whois elloways.esocialzdomains.eu.org</code>
                 </p>
             </div>
 
@@ -42,7 +42,7 @@ export const WhoisScreen: React.FC = () => {
                     Until mainstream WHOIS clients support this, please manually specify the WHOIS server. For RFC 1036 clients, use the <strong>-h</strong> flag like this: <code style={{ background: '#f1f5f9', padding: '2px 4px', borderRadius: '4px' }}>-h</code>
                 </p>
                 <div className={styles.codeBlock}>
-                    whois -h whois.digitalplat.org "domainname"
+                    whois -h whois.eu.org "domainname"
                 </div>
             </div>
 
@@ -55,16 +55,16 @@ export const WhoisScreen: React.FC = () => {
                 </p>
                 
                 <div className={styles.iconLabel}>Server</div>
-                <div className={styles.codeBlock}>https://rdap.digitalplat.org</div>
+                <div className={styles.codeBlock}>https://rdap.org</div>
 
                 <div className={styles.iconLabel}>Browser Usage</div>
-                <div className={styles.codeBlock}>https://rdap.digitalplat.org/domain/domainname</div>
+                <div className={styles.codeBlock}>https://rdap.org/domain/domainname</div>
 
                 <div className={styles.iconLabel}>Command Line</div>
-                <div className={styles.codeBlock}>curl https://rdap.digitalplat.org/domain/domainname</div>
+                <div className={styles.codeBlock}>curl https://rdap.org/domain/domainname</div>
 
                 <p className={styles.subText} style={{ marginTop: '24px', fontSize: '12px' }}>
-                    Replace <code style={{ fontStyle: 'italic' }}>domainname</code> with your full domain, for example <code style={{ fontStyle: 'italic' }}>example.us.kg</code>.
+                    Replace <code style={{ fontStyle: 'italic' }}>domainname</code> with your full domain, for example <code style={{ fontStyle: 'italic' }}>elloways.esocialzdomains.eu.org</code>.
                 </p>
             </div>
         </div>

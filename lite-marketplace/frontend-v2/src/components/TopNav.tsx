@@ -120,7 +120,11 @@ export const TopNav: React.FC<TopNavProps> = ({ user, setScreen }) => {
         {/* Profile Dropdown */}
         <div style={{ position: 'relative' }}>
           <button className={styles.topNavProfile} onClick={(e) => toggleDropdown(e, 'profile')}>
-            <div className={styles.avatar}>{initials}</div>
+            {user?.photoURL ? (
+              <img src={user.photoURL} alt="" className={styles.avatar} style={{ objectFit: 'cover' }} />
+            ) : (
+              <div className={styles.avatar}>{initials}</div>
+            )}
             <span>{displayName}</span>
             <ChevronDown size={14} />
           </button>
@@ -133,7 +137,7 @@ export const TopNav: React.FC<TopNavProps> = ({ user, setScreen }) => {
                 <Settings size={16} /> {t('settings')}
               </div>
               <div className={styles.dividerSmall} />
-              <div className={styles.dropdownItem} style={{ color: '#ef4444' }} onClick={() => auth.signOut()}>
+              <div className={styles.dropdownItem} style={{ color: 'var(--danger, #ef4444)' }} onClick={() => auth.signOut()}>
                 <LogOut size={16} /> {t('logout')}
               </div>
             </div>

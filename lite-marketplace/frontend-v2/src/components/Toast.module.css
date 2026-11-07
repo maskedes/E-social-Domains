@@ -1,0 +1,230 @@
+/* ── Popup card stack (top-right) ── */
+.stack {
+  position: fixed;
+  top: 76px;
+  right: 24px;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 300px;
+  max-width: 380px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  pointer-events: auto;
+  animation: toastIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.success .iconWrap {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.error .iconWrap {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.info .iconWrap {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.iconWrap {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.message {
+  font-size: 12.5px;
+  color: var(--text-secondary, #64748b);
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary, #64748b);
+  padding: 4px;
+  border-radius: 6px;
+  align-self: flex-start;
+}
+
+.close:hover {
+  background: var(--bg-secondary, #f1f5f9);
+}
+
+/* thin auto-dismiss progress line */
+.progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: currentColor;
+  opacity: 0.35;
+  transform-origin: left;
+  animation: progressLine 4.5s linear forwards;
+}
+
+.error .progress {
+  animation-duration: 7s;
+}
+
+@keyframes progressLine {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+/* ── Confirmation dialog card ── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.dialog {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 18px;
+  padding: 24px 22px 20px;
+  text-align: center;
+  box-shadow: 0 24px 60px -12px rgba(15, 23, 42, 0.35);
+  animation: dialogIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dialogIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.dlgIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 14px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dlgIcon.primary {
+  background: #e0f2fe;
+  color: #0284c7;
+}
+
+.dlgIcon.danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.dlgTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 6px;
+}
+
+.dlgMessage {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary, #64748b);
+  margin: 0 0 18px;
+  overflow-wrap: anywhere;
+}
+
+.dlgActions {
+  display: flex;
+  gap: 10px;
+}
+
+.btnCancel,
+.btnConfirm,
+.btnDanger {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btnCancel {
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: transparent;
+  color: var(--text-primary, #0f172a);
+}
+
+.btnCancel:hover {
+  background: var(--bg-secondary, #f1f5f9);
+}
+
+.btnConfirm {
+  border: none;
+  background: var(--accent-primary, #2563eb);
+  color: #fff;
+}
+
+.btnConfirm:hover {
+  filter: brightness(1.08);
+}
+
+.btnDanger {
+  border: none;
+  background: #dc2626;
+  color: #fff;
+}
+
+.btnDanger:hover {
+  filter: brightness(1.08);
+}

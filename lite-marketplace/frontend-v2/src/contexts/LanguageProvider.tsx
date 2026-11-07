@@ -5,8 +5,8 @@ import { LanguageContext, translate } from './LanguageContext';
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('en');
 
-  const t = (key: TranslationKey): string => {
-    return translate(language, key);
+  const t = (key: TranslationKey, params?: Record<string, string | number>): string => {
+    return translate(language, key, params);
   };
 
   return (
