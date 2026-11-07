@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInAnonymously,
     signInWithPopup,
     GoogleAuthProvider,
     GithubAuthProvider,
@@ -83,18 +82,6 @@ export const AuthScreen: React.FC = () => {
             } else {
                 await createUserWithEmailAndPassword(auth, email, pass);
             }
-        } catch (err: any) {
-            setError(friendlyError(err));
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleAnonymous = async () => {
-        setError(null);
-        setLoading(true);
-        try {
-            await signInAnonymously(auth);
         } catch (err: any) {
             setError(friendlyError(err));
         } finally {
@@ -216,15 +203,6 @@ export const AuthScreen: React.FC = () => {
                         </button>
                     ))}
                 </div>
-
-                <button
-                    type="button"
-                    className={styles.anonBtn}
-                    onClick={handleAnonymous}
-                    disabled={loading}
-                >
-                    Browse anonymously
-                </button>
             </div>
         </div>
     );

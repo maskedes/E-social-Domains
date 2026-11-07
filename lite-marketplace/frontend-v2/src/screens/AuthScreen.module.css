@@ -171,8 +171,8 @@
 }
 
 .input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.15);
+  border-color: var(--text-primary);
+  box-shadow: 0 0 0 1px var(--text-primary);
 }
 
 .buttonPrimary {
@@ -280,26 +280,6 @@
 .googleBtn:disabled, .appleBtn:disabled, .githubBtn:disabled {
   opacity: 0.5;
   cursor: wait;
-}
-
-/* ── Anonymous button ────────────────────────────────────────── */
-
-.anonBtn {
-  background: transparent;
-  color: var(--text-secondary);
-  border: none;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.2s;
-  padding: 6px;
-  align-self: center;
-  font-family: inherit;
-}
-
-.anonBtn:hover:not(:disabled) {
-  color: var(--accent-primary);
-  text-decoration: underline;
 }
 
 /* ── Small screens ───────────────────────────────────────────── */
