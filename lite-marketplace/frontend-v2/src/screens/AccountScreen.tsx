@@ -4,6 +4,7 @@ import { User, Mail, Calendar, ShieldCheck, Wallet } from 'lucide-react';
 import styles from './Screens.module.css';
 import { WalletSection } from '../components/WalletSection';
 import { ChangePasswordModal } from '../components/PasswordModal';
+import { TwoFactorSection } from '../components/TwoFactorSection';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface AccountProps {
@@ -44,6 +45,9 @@ export const AccountScreen: React.FC<AccountProps> = ({ user, setScreen }) => {
           <span>{t('wallet')}</span>
         </div>
         <WalletSection user={user} />
+
+        {/* ── Two-factor authentication ─────────────────────────── */}
+        <TwoFactorSection user={user} />
 
         <div className={styles.divider} style={{ margin: '28px 0 8px' }} />
 

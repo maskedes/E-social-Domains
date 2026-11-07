@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, onSnapshot, query, where, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from 'firebase/auth';
-import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail } from 'lucide-react';
+import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, ShieldCheck, EyeOff } from 'lucide-react';
 import styles from './Screens.module.css';
 import { useToast } from '../components/Toast';
 import { DnsDocModal } from '../components/DnsDocModal';
@@ -25,6 +25,11 @@ interface UserDomain {
   userId: string;
   status: string;
   createdAt: any;
+  expiresAt?: any;
+  nameservers?: string[];
+  ownerName?: string;
+  locked?: boolean;
+  transfer_lock?: boolean;
 }
 
 interface DnsRecord {
@@ -110,6 +115,10 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const [verifyPublished, setVerifyPublished] = useState<{ host: string; value: string } | null>(null);
   // Domain host target (A record) — user sets where the domain points
   const [targetDraft, setTargetDraft] = useState('');
+  // Domain lock — blocks transfer attempts (persisted to Firestore doc)
+  const [domainLocked, setDomainLocked] = useState(true);
+  // WHOIS privacy — hides registrant details from the public WHOIS database
+  const [whoisPrivate, setWhoisPrivate] = useState(true);
 
   const handleVerifyPublish = async () => {
     const svc = VERIFY_SERVICES.find(s => s.id === verifyService);
@@ -194,6 +203,70 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const dnsMode = realNS.some(h => /esocialzdomains\.eu\.org|e-domainz|edes/i.test(String(h)))
     ? `Internal (EDES DNS)` 
     : realNS.length ? `External` : '—';
+
+  // Sync the domain lock with the Firestore doc (locked / transfer_lock)
+  useEffect(() => {
+    try {
+      const docLocked = (selDomainDoc as any)?.locked ?? (selDomainDoc as any)?.transfer_lock;
+      const local = localStorage.getItem(`lock:${displayDomain}`);
+      setDomainLocked(docLocked === true || local === '1');
+    } catch { /* private mode */ }
+  }, [selDomainDoc, displayDomain]);
+
+  // Persist the domain lock — Firestore write (falls back to localStorage)
+  const toggleDomainLock = async (v: boolean) => {
+    if (!displayDomain) return;
+    setBusy(true);
+    try {
+      const q = query(collection(db, 'domains'), where('name', '==', displayDomain));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        await Promise.all(snap.docs.map(d => updateDoc(doc(db, 'domains', d.id), { locked: v, lockedAt: new Date().toISOString() })));
+        setDomainLocked(v);
+        toast.updated('Domain lock ' + (v ? 'enabled' : 'disabled'), v ? `${displayDomain} is locked — transfer attempts will be refused.` : `${displayDomain} can now be transferred.`);
+      } else {
+        try { localStorage.setItem(`lock:${displayDomain}`, v ? '1' : '0'); } catch { /* private mode */ }
+        setDomainLocked(v);
+        toast.updated('Domain lock ' + (v ? 'enabled' : 'disabled'), v ? `${displayDomain} is locked (saved locally).` : `${displayDomain} can now be transferred (saved locally).`);
+      }
+    } catch (e) {
+      try { localStorage.setItem(`lock:${displayDomain}`, v ? '1' : '0'); setDomainLocked(v); toast.saved('Domain lock ' + (v ? 'enabled' : 'disabled'), `${displayDomain} (saved locally) — ${(e as Error).message}`); } catch { setError((e as Error).message); }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Download a plain-text Domain Ownership Certificate  // Sync WHOIS privacy with the Firestore doc (whois_privacy / privacy_protection)
+  useEffect(() => {
+    try {
+      const docPrivate = (selDomainDoc as any)?.whois_privacy ?? (selDomainDoc as any)?.privacy_protection;
+      const local = localStorage.getItem(`whois:${displayDomain}`);
+      setWhoisPrivate(docPrivate === true || local === '1');
+    } catch { /* private mode */ }
+  }, [selDomainDoc, displayDomain]);
+
+  // Persist WHOIS privacy — Firestore write (falls back to localStorage)
+  const toggleWhoisPrivacy = async (v: boolean) => {
+    if (!displayDomain) return;
+    setBusy(true);
+    try {
+      const q = query(collection(db, 'domains'), where('name', '==', displayDomain));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        await Promise.all(snap.docs.map(d => updateDoc(doc(db, 'domains', d.id), { whois_privacy: v, whois_privacy_at: new Date().toISOString() })));
+        setWhoisPrivate(v);
+        toast.updated('WHOIS privacy ' + (v ? 'enabled' : 'disabled'), v ? `${displayDomain} — registrant details are redacted from public WHOIS.` : `${displayDomain} — registrant details are now public.`);
+      } else {
+        try { localStorage.setItem(`whois:${displayDomain}`, v ? '1' : '0'); } catch { /* private mode */ }
+        setWhoisPrivate(v);
+        toast.updated('WHOIS privacy ' + (v ? 'enabled' : 'disabled'), v ? `${displayDomain} (saved locally) — details redacted.` : `${displayDomain} (saved locally) — details now public.`);
+      }
+    } catch (e) {
+      try { localStorage.setItem(`whois:${displayDomain}`, v ? '1' : '0'); setWhoisPrivate(v); toast.saved('WHOIS privacy ' + (v ? 'enabled' : 'disabled'), `${displayDomain} (saved locally) — ${(e as Error).message}`); } catch { setError((e as Error).message); }
+    } finally {
+      setBusy(false);
+    }
+  };
 
   // Download a plain-text Domain Ownership Certificate
   const handleCertificate = () => {
@@ -1092,6 +1165,24 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           <button className={styles.ovBtn} onClick={() => setSetupOpen(true)}>Renewal</button>
         </div>
 
+        {/* WHOIS privacy — ICANN-mandated public WHOIS is risky; redact your details */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, flexWrap: 'wrap', marginTop: 16, paddingTop: 16, borderTop: '1px solid #cbd5e1' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, maxWidth: 760 }}>
+            <EyeOff size={18} style={{ color: 'var(--accent-primary)', flexShrink: 0, marginTop: 2 }} />
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>WHOIS privacy {whoisPrivate ? 'on' : 'off'}</div>
+              <p className={styles.subText} style={{ fontSize: 12, marginTop: 4, lineHeight: 1.55, margin: 0 }}>
+                ICANN requires domain owners to provide personal details — name, email, phone and address — and they are published in the public WHOIS database.
+                Everyone, including scammers and hackers, can look them up. Keep WHOIS privacy <strong>on</strong> to redact your details behind a proxy record.
+              </p>
+            </div>
+          </div>
+          <label className={styles.toggle} title={whoisPrivate ? 'WHOIS privacy is on — your registrant details are redacted' : 'WHOIS privacy is off — your details are publicly visible'}>
+            <input className={styles.toggleInput} type="checkbox" checked={whoisPrivate} onChange={(e) => toggleWhoisPrivacy(e.target.checked)} />
+            <span className={styles.toggleSlider} />
+          </label>
+        </div>
+
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
           <input
             className={styles.input}
@@ -1660,6 +1751,25 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
             )}
           </div>
         )}
+      </div>
+
+      {/* ── Domain lock — blocks transfer attempts ── */}
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ShieldCheck size={18} style={{ color: 'var(--accent-primary)' }} />
+          <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>Domain lock {domainLocked ? 'on' : 'off'}</span>
+        </div>
+        <p className={styles.subText} style={{ marginTop: 8, maxWidth: 720 }}>
+          After registering a domain name, enable domain locking. This security feature automatically blocks any domain transfer attempts.
+          Any time you visit the registration website to change account settings or domain settings, verify that domain locking is still on.
+        </p>
+        <div className={styles.toggleRow}>
+          <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{domainLocked ? 'This domain cannot be transferred' : 'Transfers are allowed'}</span>
+          <label className={styles.toggle} title={domainLocked ? 'Unlock domain (allow transfers)' : 'Lock domain (block transfers)'}>
+            <input className={styles.toggleInput} type="checkbox" checked={domainLocked} onChange={(e) => toggleDomainLock(e.target.checked)} />
+            <span className={styles.toggleSlider} />
+          </label>
+        </div>
       </div>
 
       {/* ── Danger zone: delete the entire domain ── */}
