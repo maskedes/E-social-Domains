@@ -1374,7 +1374,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               </p>
             )}
             {nsVerifyResult && (
-              <pre className={styles.stepDesc} style={{ marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+              <pre style={{ marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
                 {nsVerifyResult}
               </pre>
             )}
@@ -1429,12 +1429,14 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
           <div style={{ display: 'flex', gap: 6 }}>
-            <button className={styles.buttonInline} onClick={handleExportZoneFile} disabled={records.length === 0} title="Export zone file (RFC 1035) — import it into the new DNS host before switching nameservers">
-              <svg width="16" height="16" viewBox="0 0 36 36" aria-hidden style={{ color: "var(--accent-primary)" }}>
+            <button className={styles.iconBtn} onClick={handleExportZoneFile} disabled={records.length === 0} aria-label="Export zone file"
+              title="Export zone file (RFC 1035)">
+              <svg width="20" height="20" viewBox="0 0 36 36" aria-hidden style={{ color: 'var(--text-primary)' }}>
                 <path d="M0 0h36v36H0z" fill="none" />
                 <path fill="currentColor" d="M6 13.61h7.61V6H24v8.38h2V6a2 2 0 0 0-2-2H10.87L4 10.87V30a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2H6Zm0-1.92L11.69 6H12v6H6Z" />
                 <path fill="currentColor" d="M28.32 16.35a1 1 0 0 0-1.41 1.41L30.16 21H18a1 1 0 0 0 0 2h12.19l-3.28 3.28a1 1 0 1 0 1.41 1.41L34 22Z" />
               </svg>
+              <span className={styles.iconBtnLabel}>Export</span>
             </button>
             <input
               ref={importFileRef}
@@ -1444,19 +1446,25 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               onChange={handleImportZoneFile}
             />
             <button
-              className={styles.buttonInline}
+              className={styles.iconBtn}
               onClick={() => importFileRef.current?.click()}
               disabled={busy || importing}
-              title="Import zone file (RFC 1035) — BIND format; $ORIGIN/$TTL, @, relative names, parentheses, quoted TXT. Skips SOA, the zone's own NS, unknown types and out-of-zone names with a warning each."
+              aria-label="Import zone file"
+              title="Import zone file (RFC 1035)"
             >
-              {importing ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <svg width="16" height="16" viewBox="0 0 36 36" aria-hidden style={{ color: "var(--accent-primary)" }}>
+              {importing ? <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} /> : <svg width="20" height="20" viewBox="0 0 36 36" aria-hidden style={{ color: 'var(--text-primary)' }}>
                 <path d="M0 0h36v36H0z" fill="none" />
                 <path fill="currentColor" d="M28 4H14.87L8 10.86V15h2v-1.39h7.61V6H28v24H8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m-12 8h-6v-.32L15.7 6h.3Z" />
                 <path fill="currentColor" d="M11.94 26.28a1 1 0 1 0 1.41 1.41L19 22l-5.68-5.68a1 1 0 0 0-1.41 1.41L15.2 21H3a1 1 0 1 0 0 2h12.23Z" />
               </svg>}
+              <span className={styles.iconBtnLabel}>Import</span>
             </button>
-            <button className={styles.buttonInline} onClick={() => refresh()} title="Refresh">
-              <RefreshCw size={16} />
+            <button className={styles.iconBtn} onClick={() => refresh()} disabled={loading}
+              aria-label="Refresh DNS records"
+              title="Refresh — re-fetch the zone and records live from Cloudflare"
+            >
+              <RefreshCw size={20} className={loading ? styles.spin : undefined} />
+              <span className={styles.iconBtnLabel}>Refresh</span>
             </button>
           </div>
         </div>
@@ -1466,7 +1474,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           </p>
         )}
         {importResult && (
-          <pre className={styles.stepDesc} style={{ marginTop: 0, marginBottom: 12, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+          <pre style={{ marginTop: 0, marginBottom: 12, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
             {importResult}
           </pre>
         )}
@@ -1579,7 +1587,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
                 </div>
 
                 {emailResult && (
-                  <pre className={styles.stepDesc} style={{ marginTop: 14, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                  <pre style={{ marginTop: 14, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
                     {emailResult}
                   </pre>
                 )}

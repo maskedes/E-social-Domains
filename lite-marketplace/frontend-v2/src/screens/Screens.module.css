@@ -1134,10 +1134,65 @@
 }
 
 .buttonInline {
-  composes: buttonPrimary;
   width: auto;
-  padding: 12px 24px;
+  padding: 8px 10px;
   display: flex;
   align-items: center;
   gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.buttonInline:hover {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+}
+
+/* Icon buttons: bigger icons, text label reveals on hover/focus only */
+.iconBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.iconBtn:hover,
+.iconBtn:focus-visible {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Label starts collapsed; expands on hover/focus of the button */
+.iconBtnLabel {
+  display: inline-flex;
+  align-items: center;
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: max-width 0.22s ease, opacity 0.18s ease, padding 0.22s ease;
+}
+
+.iconBtn:hover .iconBtnLabel,
+.iconBtn:focus-visible .iconBtnLabel {
+  max-width: 110px;
+  opacity: 1;
+  padding-left: 4px;
 }
