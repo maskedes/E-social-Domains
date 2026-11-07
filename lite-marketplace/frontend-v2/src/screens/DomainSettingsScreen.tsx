@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, onSnapshot, query, where, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from 'firebase/auth';
-import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, Download } from 'lucide-react';
+import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, Download, Upload } from 'lucide-react';
 import styles from './Screens.module.css';
 import { useToast } from '../components/Toast';
 
@@ -87,6 +87,11 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const [dkimSelector, setDkimSelector] = useState('');
   const [dmarcPolicy, setDmarcPolicy] = useState('none');
   const [emailResult, setEmailResult] = useState('');
+  // Zone-file import state (source precedence: CNAME exclusivity, imported MX
+  // authoritative for what it defines, one SPF/DMARC/DKIM per name, warnings)
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState('');
+  const importFileRef = useRef<HTMLInputElement>(null);
   
   // State initialization - use domain prop first, then fallback
   const [selectedDomain, setSelectedDomain] = useState<string | null>(domain ?? null);
@@ -240,6 +245,217 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
     a.click();
     URL.revokeObjectURL(url);
     toast.saved('Zone file exported', `${records.length} records written to ${displayDomain}.zone.txt`);
+  };
+
+  // ── Zone file import (RFC 1035 / BIND format) ──
+  // Sources disagree → higher one wins: customdomain > manual > imported > discovered.
+  // A CNAME can't share a name; an imported MX set replaces the copied MX set;
+  // one v=spf1 / v=DMARC1 / v=DKIM1 TXT per name; every replaced or skipped
+  // record is explained in warnings.
+  const parseZoneFile = (text: string, zoneName: string): { recs: { name: string; type: string; ttl: number; priority?: number; content: string }[]; warnings: string[] } => {
+    const out: { name: string; type: string; ttl: number; priority?: number; content: string }[] = [];
+    const warnings: string[] = [];
+    const zone = zoneName.toLowerCase();
+    let origin = `${zone}.`;
+    let defaultTtl = 3600;
+    let lastOwner = '';
+    const HOSTED = new Set(['A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA']);
+    const TYPES = new Set(['SOA', 'NS', 'A', 'AAAA', 'CNAME', 'MX', 'TXT', 'SRV', 'CAA', 'PTR', 'DNAME', 'NAPTR', 'HINFO', 'LOC', 'SSHFP', 'TLSA', 'SVCB', 'HTTPS']);
+
+    const ttlToSecs = (tok: string, no: number): number => {
+      const m = tok.toLowerCase().match(/^(\d+)([smhdw]?)$/);
+      if (!m) return defaultTtl;
+      const mult: Record<string, number> = { '': 1, s: 1, m: 60, h: 3600, d: 86400, w: 604800 };
+      const v = parseInt(m[1], 10) * mult[m[2]];
+      if (v < 60 || v > 604800) warnings.push(`line ${no}: TTL ${tok} clamped to the 60–604800 range`);
+      return Math.min(604800, Math.max(60, v));
+    };
+    const stripComment = (s: string) => {
+      let r = '', q = false;
+      for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (c === '"') q = !q;
+        if (c === ';' && !q) break;
+        r += c;
+      }
+      return r;
+    };
+    const tokenize = (s: string): string[] => {
+      const toks: string[] = [];
+      let cur = '', q = false;
+      for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (c === '"') { q = !q; cur += c; }
+        else if (!q && /\s/.test(c)) { if (cur) { toks.push(cur); cur = ''; } }
+        else if (!q && (c === '(' || c === ')')) { if (cur) { toks.push(cur); cur = ''; } }
+        else cur += c;
+      }
+      if (cur) toks.push(cur);
+      return toks;
+    };
+    const resolveName = (tok: string, no: number): string | null => {
+      let n = tok.toLowerCase();
+      if (n === '@') n = origin;
+      else if (!n.endsWith('.')) n = `${n}.${origin}`;
+      n = n.replace(/\.$/, '');
+      if (n === zone) return zoneName; // apex
+      if (!n.endsWith(`.${zone}`)) { warnings.push(`line ${no}: name ${n} is outside ${zone}. — skipped`); return null; }
+      return n.slice(0, n.length - zone.length) || zoneName; // relative ('' → apex)
+    };
+    const dnsName = (s: string) => (s || '').replace(/\.$/, '').toLowerCase();
+    const parseTxt = (rdata: string): string => {
+      const parts: string[] = [];
+      const re = /"((?:[^"\\]|\\.)*)"/g;
+      let m: RegExpExecArray | null, any = false;
+      while ((m = re.exec(rdata))) { parts.push(m[1].replace(/\\(.)/g, '$1')); any = true; }
+      return any ? parts.join('') : rdata.trim();
+    };
+
+    // Join multi-line records (parentheses) first, remembering blank owners
+    const logical: { line: string; no: number; blank: boolean }[] = [];
+    let buf = '', bufNo = 0, depth = 0, startBlank = false;
+    text.split(/\r?\n/).forEach((raw, idx) => {
+      const l = stripComment(raw);
+      if (!buf.trim()) { bufNo = idx + 1; startBlank = /^\s/.test(raw) && l.trim().length > 0; }
+      buf += (buf.trim() ? ' ' : '') + l.trim();
+      depth += (l.match(/\(/g) || []).length - (l.match(/\)/g) || []).length;
+      if (depth <= 0) { if (buf.trim()) logical.push({ line: buf, no: bufNo, blank: startBlank }); buf = ''; depth = 0; }
+    });
+    if (buf.trim()) warnings.push(`line ${bufNo}: record with unclosed parenthesis skipped`);
+
+    logical.forEach(({ line, no, blank: startsBlank }) => {
+      const t = line.trim();
+      if (!t) return;
+      const blankOwner = startsBlank && !!lastOwner;
+      const dir = t.split(/\s+/)[0].toUpperCase();
+      if (dir === '$INCLUDE' || dir === '$GENERATE') { warnings.push(`line ${no}: ${dir} is not hosted — skipped`); return; }
+      if (dir === '$ORIGIN') { origin = (t.split(/\s+/)[1] || origin).toLowerCase(); return; }
+      if (dir === '$TTL') { defaultTtl = ttlToSecs(t.split(/\s+/)[1] || '3600', no); return; }
+
+      const toks = tokenize(t);
+      const typeIdx = toks.findIndex(tk => TYPES.has(tk.toUpperCase()));
+      if (typeIdx < 0) { warnings.push(`line ${no}: not a resource record (no type found) — skipped`); return; }
+      let oi = 0, ttl = defaultTtl;
+      let owner = '';
+      if (!blankOwner && typeIdx > 0) {
+        const first = toks[0];
+        if (!TYPES.has(first.toUpperCase()) && !/^(IN|CH|HS)$/i.test(first) && !/^\d+([smhdw]?)$/i.test(first)) {
+          owner = first; oi = 1;
+        }
+      }
+      // remaining tokens before the type are TTL and/or class
+      for (; oi < typeIdx; oi++) {
+        const tk = toks[oi];
+        if (/^\d+([smhdw]?)$/i.test(tk)) ttl = ttlToSecs(tk, no);
+        // class (IN/CH/HS) tokens are simply skipped
+      }
+      lastOwner = owner || lastOwner;
+      const type = toks[typeIdx].toUpperCase();
+      const rdataToks = toks.slice(typeIdx + 1);
+      const rd = (i: number) => dnsName(rdataToks[i] || '');
+      if (type === 'SOA') { warnings.push(`line ${no}: the zone's own SOA is never copied — skipped`); return; }
+      if (type === 'NS') {
+        const nm = resolveName(owner || lastOwner, no);
+        if (nm === null) return;
+        if (nm === zoneName) { warnings.push(`line ${no}: the zone's own NS records are never copied — skipped`); return; }
+        out.push({ name: nm, type, ttl, content: rd(0) });
+        return;
+      }
+      if (!HOSTED.has(type)) { warnings.push(`line ${no}: ${type} records are not hosted — skipped`); return; }
+      const nm = resolveName(owner || lastOwner, no);
+      if (nm === null) return;
+      if (!rdataToks.length) { warnings.push(`line ${no}: no record data — skipped`); return; }
+      if (type === 'MX') out.push({ name: nm, type, ttl, priority: parseInt(rdataToks[0], 10) || 0, content: rd(1) });
+      else if (type === 'SRV') out.push({ name: nm, type, ttl, priority: parseInt(rdataToks[0], 10) || 0, content: `${rd(1)} ${rd(2)} ${rd(3)}` });
+      else if (type === 'TXT') out.push({ name: nm, type, ttl, content: parseTxt(toks.slice(typeIdx + 1).join(' ')) });
+      else if (type === 'CAA') out.push({ name: nm, type, ttl, content: rdataToks.join(' ') });
+      else out.push({ name: nm, type, ttl, content: rd(0) });
+    });
+    return { recs: out, warnings };
+  };
+
+  const handleImportZoneFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !displayDomain) return;
+    setImporting(true);
+    setImportResult('');
+    try {
+      const text = await file.text();
+      if (file.size > 256 * 1024) throw new Error('Zone file larger than 256 KB — nothing imported.');
+      const { recs, warnings } = parseZoneFile(text, displayDomain);
+      const w = [...warnings];
+      if (!recs.length) throw new Error('The zone file has no records that can be hosted.');
+      const existing = records as any[];
+      const byName = new Map<string, any[]>();
+      existing.forEach(r => {
+        const k = String(r.name || '').toLowerCase();
+        byName.set(k, [...(byName.get(k) || []), r]);
+      });
+      const same = (rec: any, r: { name: string; type: string; content: string }) =>
+        String(rec.type).toUpperCase() === r.type && String(rec.content || '').trim().toLowerCase() === r.content.trim().toLowerCase();
+      // CNAME exclusivity: a CNAME can't share its name with anything
+      const cnameNames = new Set<string>();
+      for (const r of recs.filter(x => x.type === 'CNAME')) {
+        const k = r.name.toLowerCase();
+        if ((byName.get(k) || []).length > 0) {
+          cnameNames.add(k);
+          w.push(`${r.type} at ${r.name}: skipped — a record already exists at this name (a CNAME can't share its name); it was not replaced.`);
+        }
+      }
+      // markers: one v=spf1 / v=DMARC1 / v=DKIM1 TXT per name
+      const markerOf = (c: string) => { const m = String(c).match(/^v=(spf1|DMARC1|DKIM1)\b/i); return m ? m[1].toLowerCase() : null; };
+      let created = 0, replaced = 0;
+      const mxNamesDone = new Set<string>();
+      const markerDone = new Map<string, Set<string>>();
+      for (const r of recs) {
+        const k = r.name.toLowerCase();
+        try {
+          if (r.type === 'CNAME' && cnameNames.has(k)) continue;
+          if (r.type !== 'CNAME' && cnameNames.has(k)) { w.push(`${r.type} at ${r.name}: skipped — a CNAME from the same file owns this name.`); continue; }
+          if (r.type === 'MX') {
+            // an imported MX set is authoritative for what it defines: replace the set once per name
+            if (!mxNamesDone.has(k)) {
+              mxNamesDone.add(k);
+              for (const ex of (byName.get(k) || []).filter((x: any) => String(x.type).toUpperCase() === 'MX')) {
+                await api(`/records/${ex.id}`, { method: 'DELETE' });
+                replaced++;
+              }
+            }
+          } else if (r.type === 'TXT' && markerOf(r.content)) {
+            const mk = markerOf(r.content)!;
+            const done = markerDone.get(k) || new Set<string>();
+            if (done.has(mk)) { w.push(`TXT at ${r.name}: skipped — the name can hold only one v=${mk} record.`); continue; }
+            done.add(mk);
+            markerDone.set(k, done);
+            for (const ex of (byName.get(k) || []).filter((x: any) => String(x.type).toUpperCase() === 'TXT' && markerOf(x.content) === mk)) {
+              await api(`/records/${ex.id}`, { method: 'DELETE' });
+              replaced++;
+            }
+          } else if ((byName.get(k) || []).some((x: any) => same(x, r))) {
+            w.push(`${r.type} at ${r.name}: identical record already exists — skipped.`);
+            continue;
+          }
+          const body: Record<string, unknown> = { type: r.type, name: r.name, content: r.content, ttl: r.ttl, proxied: false };
+          if (r.priority !== undefined) body.priority = r.priority;
+          if (r.type === 'MX') body.essential = true;
+          await api('/records', { method: 'POST', body: JSON.stringify(body) });
+          created++;
+        } catch (err) {
+          w.push(`${r.type} at ${r.name}: ${(err as Error).message}`);
+        }
+      }
+      const summary = `✅ ${created} record${created === 1 ? '' : 's'} imported from ${file.name}${replaced ? ` (${replaced} existing record${replaced === 1 ? '' : 's'} replaced)` : ''}${w.length ? `\n\nWarnings (${w.length}):\n• ${w.join('\n• ')}` : ''}`;
+      setImportResult(summary);
+      if (created > 0) toast.saved('Zone file imported', `${created} records created${w.length ? `, ${w.length} skipped` : ''}`);
+      else toast.error('Nothing imported', 'No records could be applied from this zone file.');
+      await refresh(true);
+    } catch (err) {
+      setImportResult(`❌ ${(err as Error).message}`);
+      toast.error('Import failed', (err as Error).message);
+    } finally {
+      setImporting(false);
+    }
   };
 
   // ── Nameserver updating (DigitalPlat-style, realtime via Firestore) ──
@@ -899,6 +1115,22 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           {(realNS.length ? realNS.slice(0, 2) : (zone?.nameServers ?? ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com']).slice(0, 2)).join('  ·  ')}
         </div>
 
+        <div style={{ background: '#FFF8E1', border: '1px solid #FFEB3B', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
+          <p className={styles.subText} style={{ margin: 0, fontSize: 12 }}>
+            <strong>⚠️ DNSSEC:</strong> before switching nameservers, turn DNSSEC off at the registrar.
+            If a DS record stays published while the nameservers change, resolvers that validate
+            DNSSEC stop answering for the domain until the chain is re-established.
+          </p>
+        </div>
+        <p className={styles.subText} style={{ fontSize: 11, marginBottom: 14 }}>
+          Before the switch, check the record list and export or import a zone file so every name
+          carries over. One zone serves the whole registrable domain. When sources disagree the
+          higher one wins — <strong>customdomain &gt; manual &gt; imported &gt; discovered</strong>.
+          A CNAME can't share its name; an imported MX set replaces the copied set; a name holds
+          only one v=spf1, one v=DMARC1 and one v=DKIM1 TXT; every replaced or skipped record is
+          explained in the import result.
+        </p>
+
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           <button className={styles.ovBtn} onClick={handleMdnsCheck} disabled={mdnsChecking || loading}>
             {mdnsChecking ? 'Checking…' : 'Check managed DNS'}
@@ -1051,6 +1283,21 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
             <button className={styles.buttonInline} onClick={handleExportZoneFile} disabled={records.length === 0} title="Export zone file (RFC 1035) — import it into the new DNS host before switching nameservers">
               <Download size={16} />
             </button>
+            <input
+              ref={importFileRef}
+              type="file"
+              accept=".txt,.zone,.db,.bind,text/plain"
+              style={{ display: 'none' }}
+              onChange={handleImportZoneFile}
+            />
+            <button
+              className={styles.buttonInline}
+              onClick={() => importFileRef.current?.click()}
+              disabled={busy || importing}
+              title="Import zone file (RFC 1035) — BIND format; $ORIGIN/$TTL, @, relative names, parentheses, quoted TXT. Skips SOA, the zone's own NS, unknown types and out-of-zone names with a warning each."
+            >
+              {importing ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={16} />}
+            </button>
             <button className={styles.buttonInline} onClick={() => refresh()} title="Refresh">
               <RefreshCw size={16} />
             </button>
@@ -1058,8 +1305,13 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         </div>
         {records.length > 0 && (
           <p className={styles.subText} style={{ fontSize: 11, marginBottom: 8 }}>
-            Before switching nameservers, check this list and export the zone file — most providers can import it. Names outside the common list are not found by providers' record scans, so carry over anything missing from the export.
+            Before switching nameservers, check this list, export the zone file, or import one — most providers can export/import it. Names outside the common list are not found by providers' record scans, so carry over anything missing.
           </p>
+        )}
+        {importResult && (
+          <pre className={styles.stepDesc} style={{ marginTop: 0, marginBottom: 12, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+            {importResult}
+          </pre>
         )}
         {records.length === 0 ? (
           <p className={styles.infoText}>No DNS records yet for this name. Create the first one above.</p>
