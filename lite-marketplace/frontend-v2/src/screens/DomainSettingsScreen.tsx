@@ -566,19 +566,6 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const setNsSlot = (i: number, v: string) =>
     setNsSlots((prev) => prev.map((s, idx) => (idx === i ? v : s)));
 
-  // Recommended preset: keep the zone on the EDES-managed Cloudflare nameservers
-  const handleUseEdesDns = () => {
-    toggleEdesDns(true);
-    setNsSlots((prev) => {
-      const next = [...prev];
-      const preset = zone?.nameServers ?? ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com'];
-      next[0] = preset[0] || 'kristin.ns.cloudflare.com';
-      next[1] = preset[1] || 'rommy.ns.cloudflare.com';
-      return next;
-    });
-    setNsMsg('');
-  };
-
   // Nameserver values must be hostnames — never IPs, resolvers or URLs.
   // (The last label of a valid NS hostname cannot be all-numeric, which
   // rejects IPv4 pairs like ns1 -> 203.0.113.53 typed per-slot.)
@@ -1649,7 +1636,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── E-Domains DNS popout ── */}
-      {dnsDocOpen && <DnsDocModal onClose={() => setDnsDocOpen(false)} enabled={edesDnsEnabled} onToggle={toggleEdesDns} onUseEdesDns={handleUseEdesDns} />}
+      {dnsDocOpen && <DnsDocModal onClose={() => setDnsDocOpen(false)} enabled={edesDnsEnabled} onToggle={toggleEdesDns} />}
     </div>
   );
 };

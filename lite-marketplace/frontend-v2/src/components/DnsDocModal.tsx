@@ -6,8 +6,7 @@ export const DnsDocModal: React.FC<{
   onClose: () => void;
   enabled?: boolean;
   onToggle?: (v: boolean) => void;
-  onUseEdesDns?: () => void;
-}> = ({ onClose, enabled = true, onToggle, onUseEdesDns }) => {
+}> = ({ onClose, enabled = true, onToggle }) => {
   return (
     <div className={s.backdrop} onClick={onClose} role="dialog" aria-modal="true" aria-label="EDES DNS — panel and documentation">
       <div className={s.modal} onClick={(e) => e.stopPropagation()}>
@@ -49,9 +48,6 @@ export const DnsDocModal: React.FC<{
                 <input type="checkbox" checked={enabled} onChange={(e) => onToggle?.(e.target.checked)} />
                 <span className={s.toggleSmallSlider} />
               </label>
-            </div>
-            <div className={s.panelActions}>
-              <button className={s.applyBtn} onClick={() => onUseEdesDns?.()}>E-Domains DNS</button>
             </div>
             <ul className={s.panelPolicies}>
               <li><strong>One change, made once.</strong> EDES writes and maintains the records this domain needs — nothing platform-wide, nothing outside this domain.</li>
