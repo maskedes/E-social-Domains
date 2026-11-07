@@ -5,6 +5,7 @@ import { User } from 'firebase/auth';
 import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail } from 'lucide-react';
 import styles from './Screens.module.css';
 import { useToast } from '../components/Toast';
+import { DnsDocModal } from '../components/DnsDocModal';
 
 export const EMAIL_PROVIDERS = [
   { id: 'google', name: 'Google Workspace', mxHost: 'smtp.google.com', mxPriority: 1, spfMechs: ['include:_spf.google.com'], dkimSelector: 'google', dmarcPolicy: 'none' },
@@ -113,6 +114,10 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
   // Domain overview + setup-wizard state (DigitalPlat-style)
   const [setupOpen, setSetupOpen] = useState(true);
+  const [emailOpen, setEmailOpen] = useState(true);
+  // EDES DNS — enable/disable for this domain (persisted) + DNS documentation modal
+  const [edesDnsEnabled, setEdesDnsEnabled] = useState(false);
+  const [dnsDocOpen, setDnsDocOpen] = useState(false);
   const [purpose, setPurpose] = useState('verify');
   const [dnsChecking, setDnsChecking] = useState(false);
   const [dnsResult, setDnsResult] = useState('');
@@ -184,6 +189,17 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
   // Determine the domain to display — needed by everything below
   const displayDomain = domain || selectedDomain || null;
+
+  // Load the persisted enable/disable flag for this domain
+  useEffect(() => {
+    try { setEdesDnsEnabled(localStorage.getItem('edesDns:' + (displayDomain || '')) === 'on'); }
+    catch { setEdesDnsEnabled(false); }
+  }, [displayDomain]);
+
+  const toggleEdesDns = (v: boolean) => {
+    setEdesDnsEnabled(v);
+    try { localStorage.setItem('edesDns:' + (displayDomain || ''), v ? 'on' : 'off'); } catch { /* private mode */ }
+  };
 
   // Real user data: find the selected domain's Firestore document
   const selDomainDoc = userDomains.find(d => d.name === displayDomain) || null;
@@ -552,6 +568,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
   // Recommended preset: keep the zone on the EDES-managed Cloudflare nameservers
   const handleUseEdesDns = () => {
+    toggleEdesDns(true);
     setNsSlots((prev) => {
       const next = [...prev];
       const preset = zone?.nameServers ?? ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com'];
@@ -1086,8 +1103,12 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Set up your domain</div>
-            <button onClick={() => setSetupOpen(!setupOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
-              {setupOpen ? 'Not now ∨' : 'Show ∧'}
+            <button onClick={() => setSetupOpen(!setupOpen)} aria-expanded={setupOpen} title={setupOpen ? 'Collapse the setup wizard' : 'Show the setup wizard'} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
+              {setupOpen ? 'Not now' : 'Show'}
+              <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden style={{ color: 'currentColor', transition: 'transform 0.2s ease', transform: setupOpen ? 'rotate(180deg)' : 'none' }}>
+                <path d="M0 0h24v24H0z" fill="none" />
+                <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 10l6 6l6-6" />
+              </svg>
             </button>
           </div>
           {setupOpen && (
@@ -1290,8 +1311,16 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* Nameservers — DigitalPlat-style realtime editor */}
       <div>
-        {/* Recommended preset banner */}
-        <div className={styles.nsRecommended}>
+        {/* Recommended preset banner — click the card to open the popout */}
+        <div
+          className={styles.nsRecommended}
+          role="button"
+          tabIndex={0}
+          title="Open E-Domains DNS panel"
+          onClick={() => setDnsDocOpen(true)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setDnsDocOpen(true); }}
+          style={{ cursor: 'pointer' }}
+        >
           <div className={styles.nsRecIcon}>
             <Globe size={22} />
           </div>
@@ -1306,7 +1335,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               {((zone?.nameServers?.[0] || 'kristin.ns.cloudflare.com') + '  ·  ' + (zone?.nameServers?.[1] || 'rommy.ns.cloudflare.com'))}
             </div>
           </div>
-          <button className={styles.nsUseBtn} onClick={handleUseEdesDns} disabled={loading || nsSaving}>
+          <button className={styles.nsUseBtn} onClick={(e) => { e.stopPropagation(); handleUseEdesDns(); }} disabled={loading || nsSaving}>
             Use EDES DNS
           </button>
         </div>
@@ -1514,11 +1543,15 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
-          <button className={styles.buttonInline} onClick={() => setSetupOpen(!setupOpen)}>
-            {setupOpen ? 'Hide ∧' : 'Show ∨'}
+          <button className={styles.buttonInline} onClick={() => setEmailOpen(!emailOpen)} aria-expanded={emailOpen} title={emailOpen ? 'Collapse Email DNS' : 'Expand Email DNS'} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {emailOpen ? 'Hide' : 'Show'}
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden style={{ color: 'currentColor', transition: 'transform 0.2s ease', transform: emailOpen ? 'rotate(180deg)' : 'none' }}>
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m6 10l6 6l6-6" />
+            </svg>
           </button>
         </div>
-        {setupOpen && (
+        {emailOpen && (
           <div style={{ marginTop: 14 }}>
             <p className={styles.subText} style={{ marginBottom: 16 }}>
               Point this domain at a mail provider (Google Workspace, Microsoft 365, Zoho).
@@ -1614,6 +1647,19 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           Delete this domain
         </button>
       </div>
+
+      {/* ── E-Domains DNS — popout panel + documentation (only when enabled) ── */}
+      {edesDnsEnabled && (
+        <button
+          onClick={() => setDnsDocOpen(true)}
+          aria-label="Open E-Domains DNS panel"
+          title="E-Domains — DNS panel, policies & docs"
+          style={{ position: 'fixed', right: 24, bottom: 28, zIndex: 150, display: 'flex', alignItems: 'center', gap: 8, padding: '13px 20px', borderRadius: 30, border: 'none', cursor: 'pointer', color: '#fff', background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', boxShadow: '0 10px 28px rgba(37,99,235,0.4)', fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit' }}
+        >
+          <Globe size={18} /> E-Domains DNS
+        </button>
+      )}
+      {dnsDocOpen && <DnsDocModal onClose={() => setDnsDocOpen(false)} enabled={edesDnsEnabled} onToggle={toggleEdesDns} onUseEdesDns={handleUseEdesDns} />}
     </div>
   );
 };

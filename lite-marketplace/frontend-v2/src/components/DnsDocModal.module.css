@@ -1,0 +1,290 @@
+/* DNS documentation modal — article layout */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 220;
+  padding: 20px;
+}
+
+.modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: min(88vh, 860px);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.headerIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-primary, #2563eb);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+  color: var(--text-primary);
+}
+
+.body {
+  overflow-y: auto;
+  padding: 6px 22px 22px;
+}
+
+.body section {
+  margin-bottom: 20px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.body section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+  letter-spacing: 0.2px;
+}
+
+.body p {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 8px;
+}
+
+.body p:last-child {
+  margin-bottom: 0;
+}
+
+.body ul,
+.body ol {
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.body li {
+  margin-bottom: 5px;
+}
+
+.body code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  background: var(--bg-secondary, #f1f5f9);
+  border-radius: 4px;
+  padding: 1px 5px;
+  word-break: break-all;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  margin: 0 0 10px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.table th,
+.table td {
+  border: 1px solid var(--border-color);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th {
+  color: var(--text-primary);
+  font-weight: 700;
+  background: var(--bg-secondary, #f8fafc);
+}
+
+.table td:first-child {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.footnote {
+  font-size: 11px !important;
+  color: var(--text-secondary) !important;
+  opacity: 0.8;
+}
+
+/* ── E-Domains DNS panel ── */
+.panelSection {
+  margin-bottom: 20px !important;
+  padding: 14px 16px !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 12px;
+  background: var(--bg-secondary, #f8fafc);
+}
+
+.panelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panelTitle {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.panelDesc {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.stateOn, .stateOff {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.stateOn { background: #dcfce7; color: #166534; }
+.stateOff { background: #f1f5f9; color: #64748b; }
+
+.toggleSmall {
+  position: relative;
+  display: inline-block;
+  width: 46px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.toggleSmall input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleSmallSlider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 24px;
+  transition: background 0.2s ease;
+}
+
+.toggleSmallSlider:before {
+  content: '';
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.toggleSmall input:checked + .toggleSmallSlider { background: var(--accent-primary, #2563eb); }
+.toggleSmall input:checked + .toggleSmallSlider:before { transform: translateX(22px); }
+
+.panelActions { margin: 12px 0; }
+
+.applyBtn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary, #3b82f6));
+  font-family: inherit;
+  transition: transform 0.15s ease;
+}
+
+.applyBtn:hover { transform: translateY(-1px); }
+
+.panelPolicies {
+  list-style: none;
+  padding: 12px 0 0;
+  margin: 0;
+  border-top: 1px solid var(--border-color);
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.panelPolicies li { margin-bottom: 5px; }
