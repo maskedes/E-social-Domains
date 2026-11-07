@@ -197,17 +197,24 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
   // Download a plain-text Domain Ownership Certificate
   const handleCertificate = () => {
+    const owner = selDomainDoc?.ownerName || user?.displayName || user?.email || 'MASK EDES';
+    const email = user?.email || '—';
+    const created = regDate ? fmt(regDate) : '—';
+    const expires = expDate ? fmt(expDate) : '—';
+    const now = new Date().toISOString();
     const txt = [
       '===== E-Socialz / EDES Domain Ownership Certificate =====',
-      `Domain:        ${displayDomain}`,
-      `Owner:         ${selDomainDoc?.ownerName || user?.displayName || user?.email || 'MASK EDES'}`,
-      `Handle:        ME1425-FREE (nic.eu.org)`,
-      `Registered:    ${regDate ? fmt(regDate) : '—'}`,
-      `Expires:       ${expDate ? fmt(expDate) : '—'}`,
+      '',
+      `User Name:     ${owner}`,
+      `Email:         ${email}`,
+      `Domain Name:   ${displayDomain}`,
+      `Date Created:  ${created}`,
+      `Expiration:    ${expires}`,
       `Nameservers:   ${realNS.length ? realNS.join(', ') : '—'}`,
-      `DNS mode:      ${dnsMode}`,
-      `Notes:         Free renewal available within 120 days of expiry.`,
-      `Issued:        ${new Date().toISOString()}`,
+      `DNS Mode:      ${dnsMode}`,
+      `Issued:        ${now}`,
+      '',
+      'This document certifies that the above user is the registered owner of the domain listed above.',
       '==========================================================',
     ].join('\n');
     const url = URL.createObjectURL(new Blob([txt], { type: 'text/plain' }));
@@ -215,7 +222,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
     a.href = url;
     a.download = `${(displayDomain || 'domain').replace(/[^a-z0-9.]/gi, '_')}-ownership-certificate.txt`;
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
   // "Check DNS" — query the global DNS (Google DoH) for NS delegation
@@ -1076,13 +1083,13 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           Free renewal is available within 120 days of expiry. Advance renewals use credits.
         </p>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 14 }}>
-          <button className={styles.ovBtnPrimary} onClick={() => { document.querySelector('input[placeholder="subdomain"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>
+          <button className={styles.ovBtn} onClick={() => { handleCertificate(); toast.saved('Certificate downloaded', `${displayDomain || 'domain'} ownership certificate saved as a text file.`); }}>
+            Download Domain Ownership Certificate
+          </button>
+          <button className={styles.ovBtn} onClick={() => { document.querySelector('input[placeholder="subdomain"]')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }}>
             DNS
           </button>
           <button className={styles.ovBtn} onClick={() => setSetupOpen(true)}>Renewal</button>
-          <button className={styles.ovBtn} onClick={handleCertificate}>
-            Download Domain Ownership Certificate
-          </button>
         </div>
 
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
@@ -1311,7 +1318,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* Nameservers — DigitalPlat-style realtime editor */}
-      <div>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         {/* Recommended preset banner — click the card to open the popout */}
         <div
           className={styles.nsRecommended}
@@ -1351,7 +1358,11 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           <>
             <div className={styles.nsGrid}>
               {nsSlots.map((val, i) => (
-                <div key={i} className={styles.nsField}>
+                <div
+                  key={i}
+                  className={styles.nsField}
+                  style={i % 2 === 1 ? { borderLeft: '1px solid #cbd5e1', paddingLeft: 14 } : undefined}
+                >
                   <label className={styles.nsLabel}>
                     {i < 2 ? '* ' : ''}NAME SERVER {i + 1}
                   </label>
@@ -1561,7 +1572,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
             <div style={{ marginBottom: 16 }}>
               <div className={styles.iconLabel}>Provider</div>
-              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginTop: 6 }}>
                 {EMAIL_PROVIDERS.map(p => {
                   const active = emailProvider === p.id;
                   return (
@@ -1579,7 +1590,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
                       aria-pressed={active}
                       title={active ? `${p.name} selected` : `Use ${p.name}`}
                       style={{
-                        padding: '12px 20px',
+                        padding: '12px 0',
+                        width: '100%',
                         borderRadius: 12,
                         border: active ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
                         background: active ? '#1f2937' : '#e5e7eb',
@@ -1609,17 +1621,17 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
                     </div>
                     <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>Priority: lower = preferred (e.g. Google: 1; Zoho: 10/20/50)</p>
                   </div>
-                  <div>
+                  <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: 14 }}>
                     <div className={styles.iconLabel}>SPF mechanisms</div>
                     <input type="text" className={styles.input} value={spfMechanisms} onChange={(e) => setSpfMechanisms(e.target.value)} placeholder="include:_spf.google.com ~all" />
                     <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>Space- or comma-separated; merged into one v=spf1 record</p>
                   </div>
-                  <div>
+                  <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: 14 }}>
                     <div className={styles.iconLabel}>DKIM selector (from your provider)</div>
                     <input type="text" className={styles.input} value={dkimSelector} onChange={(e) => setDkimSelector(e.target.value)} placeholder="google" />
                     <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>The key is unique per domain — publish the provider's &lt;selector&gt;._domainkey record as given</p>
                   </div>
-                  <div>
+                  <div style={{ borderLeft: '1px solid #cbd5e1', paddingLeft: 14 }}>
                     <div className={styles.iconLabel}>DMARC policy</div>
                     <select className={styles.select} value={dmarcPolicy} onChange={(e) => setDmarcPolicy(e.target.value)}>
                       <option value="none">p=none (monitor only)</option>
