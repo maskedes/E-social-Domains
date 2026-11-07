@@ -65,7 +65,9 @@ const DEMO_RECORDS: DnsRecord[] = [
 const api = async (path: string, init?: RequestInit) => {
   try {
     const res = await fetch(`/api/dns${path}`, {
+      method: init?.method ?? 'GET',
       headers: { 'content-type': 'application/json', ...(init?.headers || {}) },
+      body: init?.body,
     });
     const body = await res.json();
     if (!res.ok) throw new Error(body.error ?? `API ${res.status}`);
@@ -300,7 +302,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       n = n.replace(/\.$/, '');
       if (n === zone) return zoneName; // apex
       if (!n.endsWith(`.${zone}`)) { warnings.push(`line ${no}: name ${n} is outside ${zone}. — skipped`); return null; }
-      return n.slice(0, n.length - zone.length) || zoneName; // relative ('' → apex)
+      return (n.slice(0, n.length - zone.length) || zoneName).replace(/\.$/, '') || zoneName; // relative ('' → apex)
     };
     const dnsName = (s: string) => (s || '').replace(/\.$/, '').toLowerCase();
     const parseTxt = (rdata: string): string => {
@@ -311,22 +313,21 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       return any ? parts.join('') : rdata.trim();
     };
 
-    // Join multi-line records (parentheses) first, remembering blank owners
-    const logical: { line: string; no: number; blank: boolean }[] = [];
-    let buf = '', bufNo = 0, depth = 0, startBlank = false;
+    // Join multi-line records (parentheses) first
+    const logical: { line: string; no: number }[] = [];
+    let buf = '', bufNo = 0, depth = 0;
     text.split(/\r?\n/).forEach((raw, idx) => {
       const l = stripComment(raw);
-      if (!buf.trim()) { bufNo = idx + 1; startBlank = /^\s/.test(raw) && l.trim().length > 0; }
+      if (!buf.trim()) { bufNo = idx + 1; }
       buf += (buf.trim() ? ' ' : '') + l.trim();
       depth += (l.match(/\(/g) || []).length - (l.match(/\)/g) || []).length;
-      if (depth <= 0) { if (buf.trim()) logical.push({ line: buf, no: bufNo, blank: startBlank }); buf = ''; depth = 0; }
+      if (depth <= 0) { if (buf.trim()) logical.push({ line: buf, no: bufNo }); buf = ''; depth = 0; }
     });
     if (buf.trim()) warnings.push(`line ${bufNo}: record with unclosed parenthesis skipped`);
 
-    logical.forEach(({ line, no, blank: startsBlank }) => {
+    logical.forEach(({ line, no }) => {
       const t = line.trim();
       if (!t) return;
-      const blankOwner = startsBlank && !!lastOwner;
       const dir = t.split(/\s+/)[0].toUpperCase();
       if (dir === '$INCLUDE' || dir === '$GENERATE') { warnings.push(`line ${no}: ${dir} is not hosted — skipped`); return; }
       if (dir === '$ORIGIN') { origin = (t.split(/\s+/)[1] || origin).toLowerCase(); return; }
@@ -335,11 +336,17 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       const toks = tokenize(t);
       const typeIdx = toks.findIndex(tk => TYPES.has(tk.toUpperCase()));
       if (typeIdx < 0) { warnings.push(`line ${no}: not a resource record (no type found) — skipped`); return; }
+      // token-position rule: the type in first position means a blank owner
+      // (continuation of the line above); otherwise the first token is the owner
       let oi = 0, ttl = defaultTtl;
       let owner = '';
-      if (!blankOwner && typeIdx > 0) {
+      if (typeIdx === 0) {
+        owner = lastOwner;                       // blank owner
+      } else {
         const first = toks[0];
-        if (!TYPES.has(first.toUpperCase()) && !/^(IN|CH|HS)$/i.test(first) && !/^\d+([smhdw]?)$/i.test(first)) {
+        if (/^(IN|CH|HS)$/i.test(first) || /^\d+([smhdw]?)$/i.test(first)) {
+          owner = lastOwner;                     // class or TTL where the owner belongs
+        } else {
           owner = first; oi = 1;
         }
       }

@@ -88,13 +88,20 @@ const dnsApiPlugin = (): Plugin => {
           }
 
           if (url.pathname === '/records' && req.method === 'POST') {
-            const b = await readBody(req) as { type?: string; name?: string; content?: string; ttl?: number; proxied?: boolean }
+            const b = await readBody(req) as { type?: string; name?: string; content?: string; ttl?: number; proxied?: boolean; priority?: number; essential?: boolean }
             if (!b.type || !b.name || !b.content) return json(res, 400, { error: 'type, name and content are required' })
-            const record = await cf(`/zones/${zoneId}/dns_records`, {
-              method: 'POST',
-              body: JSON.stringify({ type: b.type.toUpperCase(), name: b.name, content: b.content, ttl: b.ttl ?? 1, proxied: b.proxied ?? false }),
-            })
-            return json(res, 200, { record })
+            const recType = b.type.toUpperCase()
+            const payload: Record<string, unknown> = {
+              type: recType,
+              name: b.name,
+              content: b.content,
+              ttl: b.ttl ?? 1,
+              proxied: b.proxied ?? false,
+            }
+            // MX and SRV carry a numeric priority (lower = preferred)
+            if ((recType === 'MX' || recType === 'SRV') && b.priority !== undefined) payload.priority = Number(b.priority)
+            const record = await cf(`/zones/${zoneId}/dns_records`, { method: 'POST', body: JSON.stringify(payload) })
+            return json(res, 200, { record, essential: Boolean(b.essential) })
           }
 
           const delMatch = url.pathname.match(/^\/records\/([0-9a-f]+)$/)
