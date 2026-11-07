@@ -1042,8 +1042,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* ── Domain overview (DigitalPlat-style) ── */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div >Domain overview</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Domain overview</div>
           <button className={styles.dLabelsBtn} title="No labels or notes yet">Labels &amp; notes</button>
         </div>
         <div className={styles.overviewGrid}>
@@ -1083,9 +1083,9 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         </div>
 
         {/* ── Set up your domain (collapsible) ── */}
-        <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' }}>
-            <div  style={{ margin: 0 }}>Set up your domain</div>
+        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Set up your domain</div>
             <button onClick={() => setSetupOpen(!setupOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
               {setupOpen ? 'Not now ∨' : 'Show ∧'}
             </button>
@@ -1196,8 +1196,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* User's domain selector */}
       {userDomains.length > 0 && (
-        <div>
-          <div >
+        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
             <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Your domains
           </div>
           <select
@@ -1220,8 +1220,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* ── Managed DNS (DNS hosting) — one switch, then records are written for you ── */}
-      <div>
-        <div >
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
           <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Managed DNS (DNS hosting)
         </div>
         <p className={styles.subText} style={{ marginBottom: 14 }}>
@@ -1391,8 +1391,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* Add record */}
-      <div>
-        <div >
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
           <Plus size={20} style={{ color: 'var(--accent-primary)' }} /> Add DNS record
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -1425,9 +1425,9 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* Record list */}
-      <div>
-        <div  style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className={styles.buttonInline} onClick={handleExportZoneFile} disabled={records.length === 0} title="Export zone file (RFC 1035) — import it into the new DNS host before switching nameservers">
               <svg width="16" height="16" viewBox="0 0 36 36" aria-hidden style={{ color: "var(--accent-primary)" }}>
@@ -1503,9 +1503,9 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Email setup: MX, SPF, DKIM, DMARC ── */}
-      <div>
-        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
           <button className={styles.buttonInline} onClick={() => setSetupOpen(!setupOpen)}>
             {setupOpen ? 'Hide ∧' : 'Show ∨'}
           </button>
@@ -1590,8 +1590,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Danger zone: delete the entire domain ── */}
-      <div>
-        <div  style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Trash2 size={18} style={{ color: '#dc2626' }} /> Danger zone
         </div>
         <p className={styles.subText}>
