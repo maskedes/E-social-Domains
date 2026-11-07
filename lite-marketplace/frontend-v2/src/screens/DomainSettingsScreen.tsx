@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, onSnapshot, query, where, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from 'firebase/auth';
-import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, Download, Upload } from 'lucide-react';
+import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, Upload } from 'lucide-react';
 import styles from './Screens.module.css';
 import { useToast } from '../components/Toast';
 
@@ -1425,12 +1425,16 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* Record list */}
-      <div className={styles.card}>
+      <div>
         <div className={styles.cardTitle} style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className={styles.buttonInline} onClick={handleExportZoneFile} disabled={records.length === 0} title="Export zone file (RFC 1035) — import it into the new DNS host before switching nameservers">
-              <Download size={16} />
+              <svg width="16" height="16" viewBox="0 0 36 36" aria-hidden style={{ color: "var(--accent-primary)" }}>
+                <path d="M0 0h36v36H0z" fill="none" />
+                <path fill="currentColor" d="M6 13.61h7.61V6H24v8.38h2V6a2 2 0 0 0-2-2H10.87L4 10.87V30a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2H6Zm0-1.92L11.69 6H12v6H6Z" />
+                <path fill="currentColor" d="M28.32 16.35a1 1 0 0 0-1.41 1.41L30.16 21H18a1 1 0 0 0 0 2h12.19l-3.28 3.28a1 1 0 1 0 1.41 1.41L34 22Z" />
+              </svg>
             </button>
             <input
               ref={importFileRef}
