@@ -906,8 +906,6 @@
   align-items: center;
   gap: 14px;
   background: var(--bg-secondary, #f8fafc);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
   padding: 14px 18px;
 }
 

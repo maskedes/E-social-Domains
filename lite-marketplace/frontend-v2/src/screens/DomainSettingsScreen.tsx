@@ -1043,7 +1043,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       {/* ── Domain overview (DigitalPlat-style) ── */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div className={styles.cardTitle}>Domain overview</div>
+          <div >Domain overview</div>
           <button className={styles.dLabelsBtn} title="No labels or notes yet">Labels &amp; notes</button>
         </div>
         <div className={styles.overviewGrid}>
@@ -1083,15 +1083,15 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         </div>
 
         {/* ── Set up your domain (collapsible) ── */}
-        <div className={styles.setupCard}>
+        <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px' }}>
-            <div className={styles.cardTitle} style={{ margin: 0 }}>Set up your domain</div>
+            <div  style={{ margin: 0 }}>Set up your domain</div>
             <button onClick={() => setSetupOpen(!setupOpen)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
               {setupOpen ? 'Not now ∨' : 'Show ∧'}
             </button>
           </div>
           {setupOpen && (
-            <div style={{ borderTop: '1px solid var(--border, #e2e8f0)' }}>
+            <div>
               <p className={styles.subText} style={{ padding: '12px 18px 0' }}>
                 Choose what you want to use this domain for.
               </p>
@@ -1197,7 +1197,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       {/* User's domain selector */}
       {userDomains.length > 0 && (
         <div>
-          <div className={styles.cardTitle}>
+          <div >
             <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Your domains
           </div>
           <select
@@ -1221,7 +1221,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* ── Managed DNS (DNS hosting) — one switch, then records are written for you ── */}
       <div>
-        <div className={styles.cardTitle}>
+        <div >
           <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Managed DNS (DNS hosting)
         </div>
         <p className={styles.subText} style={{ marginBottom: 14 }}>
@@ -1230,21 +1230,21 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           From then on EDES hosts the whole zone, and every record — now and later — is written automatically.
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 10, marginBottom: 14 }}>
-          <div style={{ padding: '10px 14px', border: '1px solid var(--border, #e2e8f0)', borderRadius: 8 }}>
+          <div style={{ padding: '10px 4px' }}>
             <div className={styles.iconLabel}>1. Check</div>
             <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>✅ Available — zones EDES serves can always be hosted.</p>
           </div>
-          <div style={{ padding: '10px 14px', border: '1px solid var(--border, #e2e8f0)', borderRadius: 8 }}>
+          <div style={{ padding: '10px 4px' }}>
             <div className={styles.iconLabel}>2. Start</div>
             <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>✅ Hosted zone created; your current records are copied and the ones you apply are added.</p>
           </div>
-          <div style={{ padding: '10px 14px', border: mdnsPhase !== 'start' ? '1px solid #fde68a' : '1px solid var(--border, #e2e8f0)', borderRadius: 8 }}>
+          <div style={{ padding: '10px 14px', border: mdnsPhase !== 'start' ? '1px solid #fde68a' : 'none' }}>
             <div className={styles.iconLabel}>3. Switch</div>
             <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>
               {mdnsPhase === 'start' ? 'Replace the nameservers at the registrar — see the values below.' : mdnsPhase === 'switch' ? '⏳ In progress — the delegation updates on the registry\'s own schedule.' : '✅ Done — nameservers point at EDES.'}
             </p>
           </div>
-          <div style={{ padding: '10px 14px', border: mdnsPhase === 'active' ? '1px solid #bbf7d0' : '1px solid var(--border, #e2e8f0)', borderRadius: 8 }}>
+          <div style={{ padding: '10px 14px', border: mdnsPhase === 'active' ? '1px solid #bbf7d0' : 'none' }}>
             <div className={styles.iconLabel}>4. Active</div>
             <p className={styles.subText} style={{ marginTop: 4, fontSize: 11 }}>
               {mdnsPhase === 'active' ? '✅ Zone live and verified — future record changes need no DNS edits.' : 'Waiting for the delegation to be read from the parent registry.'}
@@ -1253,11 +1253,11 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         </div>
 
         <div className={styles.iconLabel} style={{ marginBottom: 6 }}>Nameservers to enter at the registrar (one-time change)</div>
-        <div style={{ fontFamily: 'monospace', fontSize: 13, background: 'var(--bg-secondary, #f8fafc)', border: '1px solid var(--border, #e2e8f0)', borderRadius: 8, padding: '10px 14px', marginBottom: 14 }}>
+        <div style={{ fontFamily: 'monospace', fontSize: 13, background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', marginBottom: 14 }}>
           {(realNS.length ? realNS.slice(0, 2) : (zone?.nameServers ?? ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com']).slice(0, 2)).join('  ·  ')}
         </div>
 
-        <div style={{ background: '#FFF8E1', border: '1px solid #FFEB3B', borderRadius: 8, padding: '10px 14px', marginBottom: 10 }}>
+        <div style={{ background: '#FFF8E1', padding: '10px 14px', marginBottom: 10 }}>
           <p className={styles.subText} style={{ margin: 0, fontSize: 12 }}>
             <strong>⚠️ DNSSEC:</strong> before switching nameservers, turn DNSSEC off at the registrar.
             If a DS record stays published while the nameservers change, resolvers that validate
@@ -1392,7 +1392,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* Add record */}
       <div>
-        <div className={styles.cardTitle}>
+        <div >
           <Plus size={20} style={{ color: 'var(--accent-primary)' }} /> Add DNS record
         </div>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
@@ -1426,7 +1426,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* Record list */}
       <div>
-        <div className={styles.cardTitle} style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div  style={{ display: 'flex', justifyContent: 'space-between' }}>
           <span><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
           <div style={{ display: 'flex', gap: 6 }}>
             <button className={styles.buttonInline} onClick={handleExportZoneFile} disabled={records.length === 0} title="Export zone file (RFC 1035) — import it into the new DNS host before switching nameservers">
@@ -1504,7 +1504,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* ── Email setup: MX, SPF, DKIM, DMARC ── */}
       <div>
-        <div className={styles.cardTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
           <button className={styles.buttonInline} onClick={() => setSetupOpen(!setupOpen)}>
             {setupOpen ? 'Hide ∧' : 'Show ∨'}
@@ -1591,7 +1591,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* ── Danger zone: delete the entire domain ── */}
       <div>
-        <div className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div  style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Trash2 size={18} style={{ color: '#dc2626' }} /> Danger zone
         </div>
         <p className={styles.subText}>
