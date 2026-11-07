@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { collection, onSnapshot, query, where, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import { User } from 'firebase/auth';
-import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail, Upload } from 'lucide-react';
+import { Globe, AlertCircle, CheckCircle2, Loader2, Plus, RefreshCw, Trash2, Mail } from 'lucide-react';
 import styles from './Screens.module.css';
 import { useToast } from '../components/Toast';
 
@@ -1041,7 +1041,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </button>
 
       {/* ── Domain overview (DigitalPlat-style) ── */}
-      <div className={styles.card} style={{ marginBottom: '20px' }}>
+      <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className={styles.cardTitle}>Domain overview</div>
           <button className={styles.dLabelsBtn} title="No labels or notes yet">Labels &amp; notes</button>
@@ -1196,7 +1196,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* User's domain selector */}
       {userDomains.length > 0 && (
-        <div className={styles.card} style={{ marginBottom: '24px' }}>
+        <div>
           <div className={styles.cardTitle}>
             <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Your domains
           </div>
@@ -1220,7 +1220,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* ── Managed DNS (DNS hosting) — one switch, then records are written for you ── */}
-      <div className={styles.card} style={{ marginBottom: '24px' }}>
+      <div>
         <div className={styles.cardTitle}>
           <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Managed DNS (DNS hosting)
         </div>
@@ -1289,7 +1289,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* Nameservers — DigitalPlat-style realtime editor */}
-      <div className={styles.card} style={{ marginBottom: '24px' }}>
+      <div>
         {/* Recommended preset banner */}
         <div className={styles.nsRecommended}>
           <div className={styles.nsRecIcon}>
@@ -1391,7 +1391,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* Add record */}
-      <div className={styles.card} style={{ marginBottom: '24px' }}>
+      <div>
         <div className={styles.cardTitle}>
           <Plus size={20} style={{ color: 'var(--accent-primary)' }} /> Add DNS record
         </div>
@@ -1449,7 +1449,11 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               disabled={busy || importing}
               title="Import zone file (RFC 1035) — BIND format; $ORIGIN/$TTL, @, relative names, parentheses, quoted TXT. Skips SOA, the zone's own NS, unknown types and out-of-zone names with a warning each."
             >
-              {importing ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <Upload size={16} />}
+              {importing ? <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} /> : <svg width="16" height="16" viewBox="0 0 36 36" aria-hidden style={{ color: "var(--accent-primary)" }}>
+                <path d="M0 0h36v36H0z" fill="none" />
+                <path fill="currentColor" d="M28 4H14.87L8 10.86V15h2v-1.39h7.61V6H28v24H8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m-12 8h-6v-.32L15.7 6h.3Z" />
+                <path fill="currentColor" d="M11.94 26.28a1 1 0 1 0 1.41 1.41L19 22l-5.68-5.68a1 1 0 0 0-1.41 1.41L15.2 21H3a1 1 0 1 0 0 2h12.23Z" />
+              </svg>}
             </button>
             <button className={styles.buttonInline} onClick={() => refresh()} title="Refresh">
               <RefreshCw size={16} />
@@ -1499,7 +1503,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Email setup: MX, SPF, DKIM, DMARC ── */}
-      <div className={styles.card} style={{ marginTop: '24px' }}>
+      <div>
         <div className={styles.cardTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
           <button className={styles.buttonInline} onClick={() => setSetupOpen(!setupOpen)}>
@@ -1586,7 +1590,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Danger zone: delete the entire domain ── */}
-      <div className={styles.card} style={{ marginTop: '24px', borderColor: '#fecaca' }}>
+      <div>
         <div className={styles.cardTitle} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <Trash2 size={18} style={{ color: '#dc2626' }} /> Danger zone
         </div>
