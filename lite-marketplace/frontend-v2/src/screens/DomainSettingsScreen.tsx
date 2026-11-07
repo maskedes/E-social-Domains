@@ -1335,8 +1335,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               {((zone?.nameServers?.[0] || 'kristin.ns.cloudflare.com') + '  ·  ' + (zone?.nameServers?.[1] || 'rommy.ns.cloudflare.com'))}
             </div>
           </div>
-          <button className={styles.nsUseBtn} onClick={(e) => { e.stopPropagation(); handleUseEdesDns(); }} disabled={loading || nsSaving}>
-            Use EDES DNS
+          <button className={styles.nsUseBtn} onClick={(e) => { e.stopPropagation(); setDnsDocOpen(true); }} title="Open E-Domains DNS panel">
+            E-Domains DNS
           </button>
         </div>
 
@@ -1648,17 +1648,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         </button>
       </div>
 
-      {/* ── E-Domains DNS — popout panel + documentation (only when enabled) ── */}
-      {edesDnsEnabled && (
-        <button
-          onClick={() => setDnsDocOpen(true)}
-          aria-label="Open E-Domains DNS panel"
-          title="E-Domains — DNS panel, policies & docs"
-          style={{ position: 'fixed', right: 24, bottom: 28, zIndex: 150, display: 'flex', alignItems: 'center', gap: 8, padding: '13px 20px', borderRadius: 30, border: 'none', cursor: 'pointer', color: '#fff', background: 'linear-gradient(to right, var(--accent-primary), var(--accent-secondary))', boxShadow: '0 10px 28px rgba(37,99,235,0.4)', fontSize: 13.5, fontWeight: 700, fontFamily: 'inherit' }}
-        >
-          <Globe size={18} /> E-Domains DNS
-        </button>
-      )}
+      {/* ── E-Domains DNS popout ── */}
       {dnsDocOpen && <DnsDocModal onClose={() => setDnsDocOpen(false)} enabled={edesDnsEnabled} onToggle={toggleEdesDns} onUseEdesDns={handleUseEdesDns} />}
     </div>
   );

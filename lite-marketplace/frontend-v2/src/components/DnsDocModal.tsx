@@ -39,7 +39,7 @@ export const DnsDocModal: React.FC<{
               </label>
             </div>
             <div className={s.panelActions}>
-              <button className={s.applyBtn} onClick={() => onUseEdesDns?.()}>Use EDES DNS</button>
+              <button className={s.applyBtn} onClick={() => onUseEdesDns?.()}>E-Domains DNS</button>
             </div>
             <ul className={s.panelPolicies}>
               <li><strong>One change, made once.</strong> EDES writes and maintains the records this domain needs — nothing platform-wide, nothing outside this domain.</li>
