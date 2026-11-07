@@ -90,19 +90,22 @@
 .modeToggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 4px;
+  gap: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid var(--border-color);
+  border-radius: 0;
+  padding: 0;
 }
 
 .tab,
 .tabActive {
   border: none;
-  border-radius: 9px;
-  padding: 10px 0;
-  font-size: 14px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 12px 0;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   background: transparent;
@@ -112,9 +115,10 @@
 }
 
 .tabActive {
-  background: linear-gradient(to right, #0ea5e9, #2563eb);
-  color: #fff;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+  background: transparent;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--accent-primary);
+  box-shadow: none;
 }
 
 .tab:hover {
