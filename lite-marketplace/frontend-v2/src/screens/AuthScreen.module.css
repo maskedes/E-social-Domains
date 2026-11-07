@@ -175,6 +175,41 @@
   box-shadow: 0 0 0 1px var(--text-primary);
 }
 
+/* ── Password field with eye toggle ──────────────────────────── */
+
+.passwordWrap {
+  position: relative;
+}
+
+.passwordWrap .input {
+  width: 100%;
+  padding-right: 48px;
+  box-sizing: border-box;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.passwordToggle:hover {
+  color: var(--text-primary);
+  background: rgba(15, 23, 42, 0.06);
+}
+
 .buttonPrimary {
   background: linear-gradient(to right, #0ea5e9, #2563eb);
   color: white;
