@@ -8,3 +8,27 @@ backend-registrar/
 
 # Cloudflare secret files must never land in the repo
 lite-marketplace/frontend-v2/scripts/.env.cloudflare
+firebase-admin.json
+
+# Keep server/infra/API files local only
+portal/frontend/
+portal/frontend/dashboard.html
+portal/frontend/parking.html
+lite-marketplace/frontend-v2/scripts/
+lite-marketplace/frontend-v2/firestore.rules.txt
+lite-marketplace/frontend-v2/firebase.rules.safe.txt
+backend-registrar/
+data/
+config/
+nginx/
+.github/
+docker-compose.yml
+package.json
+package-lock.json
+manager/
+lite-marketplace/database.json
+lite-marketplace/package.json
+lite-marketplace/server.js
+lite-marketplace/whois_server.py
+Caddyfile
+monitoring/
