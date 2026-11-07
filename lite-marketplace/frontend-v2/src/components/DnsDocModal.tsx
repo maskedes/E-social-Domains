@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Globe, ShieldCheck, Mail, ArrowRightLeft, FileText, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { X, Globe, Mail, ArrowRightLeft, FileText, AlertCircle } from 'lucide-react';
 import s from './DnsDocModal.module.css';
 
 export const DnsDocModal: React.FC<{
@@ -27,7 +27,19 @@ export const DnsDocModal: React.FC<{
           <section className={s.panelSection}>
             <div className={s.panelRow}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span className={enabled ? s.stateOn : s.stateOff}>{enabled ? <CheckCircle2 size={16} /> : <XCircle size={16} />}</span>
+                <span className={enabled ? s.stateOnIcon : s.stateOffIcon}>
+                  {enabled ? (
+                    <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden role="img" aria-label="EDES DNS enabled">
+                      <path d="M0 0h32v32H0z" fill="none" />
+                      <path fill="#00f70a" d="M16 2a14 14 0 1 0 14 14A14 14 0 0 0 16 2m-2 19.59l-5-5L10.59 15L14 18.41L21.41 11l1.586 1.586Z" />
+                    </svg>
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 32 32" aria-hidden role="img" aria-label="EDES DNS disabled">
+                      <path d="M0 0h32v32H0z" fill="none" />
+                      <path fill="#fa0202" d="M16 2a14 14 0 1 0 14 14A14 14 0 0 0 16 2m-2 19.59l-5-5L10.59 15L14 18.41L21.41 11l1.596 1.586Z" />
+                    </svg>
+                  )}
+                </span>
                 <div>
                   <div className={s.panelTitle}>EDES DNS {enabled ? 'enabled' : 'disabled'}</div>
                   <div className={s.panelDesc}>EDES writes and keeps the records this domain needs.</div>

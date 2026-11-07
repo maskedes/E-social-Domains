@@ -906,8 +906,9 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  background: var(--bg-secondary, #f8fafc);
-  padding: 14px 18px;
+  background: transparent;
+  padding: 0;
+  margin-bottom: 6px;
 }
 
 .nsRecIcon {
