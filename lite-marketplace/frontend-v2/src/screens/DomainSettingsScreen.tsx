@@ -1475,7 +1475,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
         ) : (
           <>
             {records.map((rec) => (
-              <div key={rec.id} className={styles.domainItem} style={{ alignItems: 'center' }}>
+              <div key={rec.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0' }}>
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden style={{ color: 'var(--accent-primary)', flexShrink: 0 }}>
                     <path d="M0 0h24v24H0z" fill="none" />
