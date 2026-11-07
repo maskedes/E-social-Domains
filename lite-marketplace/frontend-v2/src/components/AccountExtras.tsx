@@ -149,7 +149,6 @@ export const ConnectAccounts: React.FC<{ user: FirebaseUser }> = ({ user }) => {
     <div className={s.connectRow}>
       {emailOnly && (
         <div className={s.connectRowItem}>
-          <span className={s.provIcon} style={{ color: 'currentColor' }}><Mail size={16} /></span>
           <span className={s.provName}>{t('provEmail')}</span>
           <span className={s.connectedBadge}><Check size={12} /> {t('connected')}</span>
         </div>
@@ -225,7 +224,6 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
     <div className={s.settingsList}>
       {/* Appearance */}
       <div className={s.settingRow}>
-        <span className={s.setIcon}>{dark ? <Moon size={16} /> : <Sun size={16} />}</span>
         <div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('darkMode')}</span>
           <span className={s.settingDesc}>{t('darkModeDesc')}</span>
@@ -240,9 +238,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
       </div>
 
       {/* Language */}
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><Globe size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('language')}</span>
           <span className={s.settingDesc}>{t('languageDesc')}</span>
         </div>
@@ -260,9 +256,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
       </div>
 
       {/* Timezone */}
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><Clock size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('timezone')}</span>
           <span className={s.settingDesc}>{t('timezoneDesc')}</span>
         </div>
@@ -278,9 +272,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
       </div>
 
       {/* Notifications */}
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><Mail size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('emailNotif')}</span>
           <span className={s.settingDesc}>{t('emailNotifsDesc')}</span>
         </div>
@@ -292,9 +284,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
           <span className={s.knob} />
         </button>
       </div>
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><Smartphone size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('pushNotif')}</span>
           <span className={s.settingDesc}>{t('pushNotifDesc')}</span>
         </div>
@@ -306,9 +296,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
           <span className={s.knob} />
         </button>
       </div>
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><BarChart3 size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('weeklyReports')}</span>
           <span className={s.settingDesc}>{t('weeklyReportsDesc')}</span>
         </div>
@@ -320,9 +308,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
           <span className={s.knob} />
         </button>
       </div>{/* Product updates */}
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><Bell size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('productUpdates')}</span>
           <span className={s.settingDesc}>{t('productUpdatesDesc')}</span>
         </div>
@@ -336,9 +322,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
       </div>
 
       {/* Security */}
-      <div className={s.settingRow}>
-        <span className={s.setIcon}><ShieldCheck size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('security')}</span>
           <span className={s.settingDesc}>
             {user.email ? t('securityDesc') : t('securitySocialDesc')}
@@ -354,9 +338,7 @@ export const MoreSettings: React.FC<{ user: FirebaseUser }> = ({ user }) => {
       {pwError && <div className={s.connectError}>{pwError}</div>}
 
       {/* Session */}
-      <div className={s.settingRow}>
-        <span className={s.setIconDanger}><LogOut size={16} /></span>
-        <div className={s.settingInfo}>
+      <div className={s.settingRow}><div className={s.settingInfo}>
           <span className={s.settingTitle}>{t('signOutTitle')}</span>
           <span className={s.settingDesc}>{t('signOutDesc')}</span>
         </div>
