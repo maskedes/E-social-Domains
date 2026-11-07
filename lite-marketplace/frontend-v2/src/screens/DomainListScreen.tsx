@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { User } from 'firebase/auth';
 import { db } from '../firebase';
 import styles from './Screens.module.css';
@@ -22,6 +22,8 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
   const [tagFilter, setTagFilter] = useState('');
   const [domains, setDomains] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -58,6 +60,103 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
     } catch (e) {
       toast.error('Delete failed', (e as Error).message || 'Firestore rules may block deletes — allow delete on the domains collection in the Firebase console.');
     }
+  };
+
+  // ── Batch selection helpers ────────────────────────────────────────
+  const toggleOne = (id: string) => setSelected(s => {
+    const next = new Set(s);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+  const toggleAllVisible = () => {
+    const ids = filteredDomains.map(d => d.id);
+    if (ids.length === 0) return;
+    const all = ids.every(id => selected.has(id));
+    setSelected(all ? new Set() : new Set(ids));
+  };
+  const selectedDomains = domains.filter(d => selected.has(d.id));
+
+  // Batch delete — removes every selected domain from the account
+  const handleBatchDelete = async () => {
+    if (selectedDomains.length === 0) return;
+    const ok = await toast.confirm({
+      title: `Delete ${selectedDomains.length} domain${selectedDomains.length > 1 ? 's' : ''}?`,
+      message: `${selectedDomains.map(d => d.name).slice(0, 5).join(', ')}${selectedDomains.length > 5 ? '…' : ''} will be removed permanently. This cannot be undone.`,
+      kind: 'danger',
+      confirmLabel: 'Delete domains',
+      icon: 'delete',
+    });
+    if (!ok) return;
+    try {
+      await Promise.all(selectedDomains.map(d => deleteDoc(doc(db, 'domains', d.id))));
+      selectedDomains.forEach(d => { try { localStorage.removeItem(`ns:${d.name}`); } catch { /* ignore */ } });
+      toast.deleted('Domains deleted', `${selectedDomains.length} domain${selectedDomains.length > 1 ? 's were' : ' was'} removed from your account.`);
+      setSelected(new Set());
+    } catch (e) {
+      toast.error('Batch delete failed', (e as Error).message || 'Firestore rules may block deletes — allow delete on the domains collection in the Firebase console.');
+    }
+  };
+
+  // Batch lock — sets locked=true in Firestore (portable to transfer service)
+  const handleBatchLock = async () => {
+    if (selectedDomains.length === 0) return;
+    try {
+      await Promise.all(selectedDomains.map(d =>
+        updateDoc(doc(db, 'domains', d.id), { locked: true, lockedAt: new Date().toISOString() })
+      ));
+      toast.updated('Domains locked', `${selectedDomains.length} domain${selectedDomains.length > 1 ? 's are' : ' is'} now transfer-locked.`);
+      setSelected(new Set());
+    } catch (e) {
+      toast.error('Batch lock failed', (e as Error).message);
+    }
+  };
+
+  // Batch WHOIS privacy — redact registrant details from public WHOIS
+  const handleBatchPrivacy = async () => {
+    if (selectedDomains.length === 0) return;
+    try {
+      await Promise.all(selectedDomains.map(d =>
+        updateDoc(doc(db, 'domains', d.id), { whois_privacy: true, whois_privacy_at: new Date().toISOString() })
+      ));
+      toast.updated('WHOIS privacy enabled', `${selectedDomains.length} domain${selectedDomains.length > 1 ? 's are' : ' is'} now hidden from public WHOIS.`);
+      setSelected(new Set());
+    } catch (e) {
+      toast.error('Batch WHOIS privacy failed', (e as Error).message);
+    }
+  };
+
+  // Batch transfer — transfer requests must be initiated per-domain by the owner
+  const handleBatchTransfer = () => {
+    if (selectedDomains.length === 0) return;
+    toast.saved('Transfer', `Open each domain's settings to start the transfer: ${selectedDomains.map(d => d.name).slice(0, 3).join(', ')}${selectedDomains.length > 3 ? '…' : ''}`);
+  };
+
+  // Batch export (selected only — complements the main Export CSV button)
+  const handleBatchExportCsv = () => {
+    if (selectedDomains.length === 0) return;
+    const rows = [
+      ['Domain', 'Status', 'Expiration date', 'Group/Tags'],
+      ...selectedDomains.map(d => [
+        d.name,
+        d.status === 'failed' ? 'Failed' : 'Active',
+        expDateOf(d)?.toLocaleDateString('en-US') ?? '—',
+        (Array.isArray(d.tags) ? d.tags.join(' ') : (d.group || d.tags || '')) + '',
+      ]),
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edes-domains-selected-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setMoreOpen(false);
+  };
+
+  // Open the settings of the first selected domain
+  const handleBatchOpenSettings = () => {
+    if (selectedDomains.length === 0) return;
+    onOpenSettings?.(selectedDomains[0].name);
   };
 
   // Expiration date of a domain (null when unknown / permanent)
@@ -220,7 +319,12 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
               {/* Header row */}
               <div className={styles.domainTableHeader}>
                 <div className={styles.dCheck}>
-                  <input type="checkbox" />
+                  <input
+                    type="checkbox"
+                    aria-label={'Select all visible domains'}
+                    checked={filteredDomains.length > 0 && filteredDomains.every(d => selected.has(d.id))}
+                    onChange={toggleAllVisible}
+                  />
                 </div>
                 <div className={styles.dNameHeader}>
                   Domains <span className={styles.dSortArrow} title="Sort">↑</span>
@@ -232,11 +336,55 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
                 <div className={styles.dColLabels}>Labels &amp; notes</div>
               </div>
 
+              {/* Batch action bar — appears when ≥1 domain is selected */}
+              {selectedDomains.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', padding: '10px 0', borderBottom: '1px solid #cbd5e1', marginBottom: 4 }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-primary)', marginRight: 4 }}>
+                    {selectedDomains.length} selected
+                  </span>
+                  <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleBatchTransfer} title="Initiate a transfer for every selected domain">
+                    Transfer
+                  </button>
+                  <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleBatchPrivacy} title="Enable WHOIS privacy (redact registrant details) on selected domains">
+                    WHOIS privacy
+                  </button>
+                  <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleBatchLock} title="Transfer-lock every selected domain">
+                    Lock
+                  </button>
+                  <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleBatchOpenSettings} title="Open settings for the first selected domain">
+                    Open settings
+                  </button>
+                  <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={handleBatchExportCsv} title="Export only the selected domains as CSV">
+                    <Download size={13} style={{ marginRight: 4 }} /> Export
+                  </button>
+                  <div style={{ position: 'relative', marginLeft: 'auto' }}>
+                    <button className={styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5 }} onClick={() => setMoreOpen(v => !v)} aria-expanded={moreOpen} aria-haspopup="menu">
+                      More options ▾
+                    </button>
+                    {moreOpen && (
+                      <div role="menu" style={{ position: 'absolute', top: '110%', right: 0, zIndex: 20, background: 'var(--bg-primary, #fff)', border: '1px solid #cbd5e1', borderRadius: 10, boxShadow: '0 6px 18px rgba(15, 23, 42, 0.12)', minWidth: 180, overflow: 'hidden' }}>
+                        <button className={styles.dLabelsBtn} role="menuitem" onClick={() => { setMoreOpen(false); handleBatchOpenSettings(); }} style={{ width: '100%', justifyContent: 'flex-start', borderRadius: 0, borderBottom: '1px solid #e2e8f0' }}>Open settings</button>
+                        <button className={styles.dLabelsBtn} role="menuitem" onClick={() => { setMoreOpen(false); handleBatchExportCsv(); }} style={{ width: '100%', justifyContent: 'flex-start', borderRadius: 0 }}>Export selected</button>
+                        <button className={styles.dLabelsBtn} role="menuitem" onClick={() => { setMoreOpen(false); setSelected(new Set()); }} style={{ width: '100%', justifyContent: 'flex-start', borderRadius: 0 }}>Clear selection</button>
+                      </div>
+                    )}
+                  </div>
+                  <button className={styles.ovBtnDanger ? styles.ovBtnDanger : styles.ovBtn} style={{ padding: '7px 12px', fontSize: 12.5, color: '#dc2626', borderColor: '#fecaca', background: '#fff5f5' }} onClick={handleBatchDelete} title="Delete every selected domain">
+                    <Trash2 size={13} style={{ marginRight: 4 }} /> Delete
+                  </button>
+                </div>
+              )}
+
               {/* Domain rows */}
               {filteredDomains.map((domain) => (
                 <div key={domain.id} className={styles.domainRow}>
                   <div className={styles.dCheck}>
-                    <input type="checkbox" />
+                    <input
+                      type="checkbox"
+                      aria-label={`Select ${domain.name}`}
+                      checked={selected.has(domain.id)}
+                      onChange={() => toggleOne(domain.id)}
+                    />
                   </div>
                   <div className={styles.dNameCell}>
                     <span
