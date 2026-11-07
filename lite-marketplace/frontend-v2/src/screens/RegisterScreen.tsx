@@ -90,6 +90,22 @@ export const RegisterScreen: React.FC<RegisterProps> = ({ user }) => {
         status: 'permanent / free',
         createdAt: serverTimestamp(),
       });
+      // A record points at the platform default; change it in Domain settings
+      const recordContent = '41.75.184.138';
+      try {
+        await fetch('/api/dns/records', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ type: 'A', name: fqdn, content: recordContent, ttl: 300, proxied: false }),
+        }).then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}));
+            console.warn('DNS record creation failed (domain saved, DNS pending):', body.error ?? r.status);
+          }
+        });
+      } catch (dnsErr) {
+        console.warn('DNS record creation failed (domain saved, DNS pending):', dnsErr);
+      }
       toast.registered(fqdn);
       setDomainName('');
       setCheck('idle');

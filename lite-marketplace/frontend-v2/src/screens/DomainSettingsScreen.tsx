@@ -36,33 +36,6 @@ interface DnsRecord {
   proxied: boolean;
 }
 
-// Demo records for testing the DNS management UI while the backend/Cloudflare API
-// is offline. Modeled on DigitalPlat-style free-domain record sets.
-const ZONE = '.esocialzdomains.eu.org';
-const DEMO_RECORDS: DnsRecord[] = [
-  { id: 'demo-01', type: 'A',      name: 'esocialzdomains.eu.org',           content: '203.0.113.10',                          ttl: 300,  proxied: true },
-  { id: 'demo-02', type: 'A',      name: 'www',                              content: '203.0.113.10',                          ttl: 300,  proxied: true },
-  { id: 'demo-03', type: 'A',      name: 'app',                              content: '198.51.100.25',                         ttl: 300,  proxied: true },
-  { id: 'demo-04', type: 'A',      name: 'api',                              content: '198.51.100.30',                         ttl: 300,  proxied: false },
-  { id: 'demo-05', type: 'AAAA',   name: 'www',                              content: '2606:4700::1111',                       ttl: 300,  proxied: false },
-  { id: 'demo-06', type: 'AAAA',   name: 'esocialzdomains.eu.org',           content: '2606:4700::2222',                       ttl: 300,  proxied: false },
-  { id: 'demo-07', type: 'CNAME',  name: 'blog',                             content: 'esocialz.hashnode.dev',                 ttl: 1800, proxied: false },
-  { id: 'demo-08', type: 'CNAME',  name: 'docs',                             content: 'maskedes.github.io',                    ttl: 1800, proxied: true },
-  { id: 'demo-09', type: 'CNAME',  name: 'shop',                             content: 'shops.myshopify.com',                   ttl: 1800, proxied: true },
-  { id: 'demo-10', type: 'MX',     name: 'esocialzdomains.eu.org',           content: '10 mail.esocialzdomains.eu.org',        ttl: 3600, proxied: false },
-  { id: 'demo-11', type: 'MX',     name: 'esocialzdomains.eu.org',           content: '20 mail2.esocialzdomains.eu.org',       ttl: 3600, proxied: false },
-  { id: 'demo-12', type: 'TXT',    name: 'esocialzdomains.eu.org',           content: 'v=spf1 include:_spf.mx.cloudflare.net ~all', ttl: 3600, proxied: false },
-  { id: 'demo-13', type: 'TXT',    name: '_dmarc',                           content: 'v=DMARC1; p=quarantine; rua=mailto:dmarc@esocialz.eu', ttl: 3600, proxied: false },
-  { id: 'demo-14', type: 'TXT',    name: 'esocialzdomains.eu.org',           content: 'edes-verification=msk-kpl-lumina-2026', ttl: 3600, proxied: false },
-  { id: 'demo-15', type: 'CAA',    name: 'esocialzdomains.eu.org',           content: '0 issue "letsencrypt.org"',             ttl: 3600, proxied: false },
-  { id: 'demo-16', type: 'CAA',    name: 'esocialzdomains.eu.org',           content: '0 issuewild "digicert.com"',            ttl: 3600, proxied: false },
-  { id: 'demo-17', type: 'SRV',    name: '_sip._tcp',                        content: '10 5 5060 sip.esocialzdomains.eu.org',  ttl: 3600, proxied: false },
-  { id: 'demo-18', type: 'NS',     name: 'auth',                             content: 'ns1.esocialzdomains.eu.org',            ttl: 86400, proxied: false },
-  { id: 'demo-19', type: 'NS',     name: 'auth',                             content: 'ns2.esocialzdomains.eu.org',            ttl: 86400, proxied: false },
-  { id: 'demo-20', type: 'A',      name: 'ns1',                              content: '203.0.113.53',                          ttl: 86400, proxied: false },
-  { id: 'demo-21', type: 'A',      name: 'ns2',                              content: '203.0.113.54',                          ttl: 86400, proxied: false },
-];
-
 const api = async (path: string, init?: RequestInit) => {
   try {
     const res = await fetch(`/api/dns${path}`, {
@@ -135,6 +108,8 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
   const [verifyBusy, setVerifyBusy] = useState(false);
   const [verifyResult, setVerifyResult] = useState('');
   const [verifyPublished, setVerifyPublished] = useState<{ host: string; value: string } | null>(null);
+  // Domain host target (A record) — user sets where the domain points
+  const [targetDraft, setTargetDraft] = useState('');
 
   const handleVerifyPublish = async () => {
     const svc = VERIFY_SERVICES.find(s => s.id === verifyService);
@@ -281,7 +256,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       if (name.endsWith('.' + displayDomain)) {
         return { owner: `${name.slice(0, name.length - displayDomain.length - 1)}.${zoneAbs}`, isRoot: false };
       }
-      // Relative name (e.g. demo data or short form) — make it absolute
+      // Relative name (unqualified short form) — make it absolute
       return { owner: `${name}.${zoneAbs}`, isRoot: false };
     };
     const lines: string[] = [
@@ -296,7 +271,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
     const seen = new Set<string>();
     records.forEach((rec) => {
       const ident = `${relToAbs(rec.name)?.owner}:${rec.type}:${rec.content}`;
-      if (seen.has(ident)) return; // skip duplicates from API + demo merge
+      if (seen.has(ident)) return; // skip duplicates from API + manual additions
       seen.add(ident);
       const rel = relToAbs(rec.name);
       if (!rel || !rec.content) return;
@@ -792,13 +767,13 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       setMessage('');
       setError('');
     } catch (e) {
-      // Backend / Cloudflare API offline -> fall back to demo data for testing
       setZone({
         name: selectedDomain,
-        status: 'demo mode (backend offline) — real zone pending eu.org delegation',
-        nameServers: ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com'],
+        status: 'could not load zone',
+        nameServers: zone?.nameServers ?? ['kristin.ns.cloudflare.com', 'rommy.ns.cloudflare.com'],
       });
-      setRecords(DEMO_RECORDS);
+      setRecords([]);
+      setError(`Could not load the zone from Cloudflare: ${(e as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -852,6 +827,30 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
     try {
       await api(`/records/${id}`, { method: 'DELETE' });
       toast.deleted('Record deleted', `${fqdn} was removed from the zone.`);
+      await refresh(true);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Point the domain's apex A record at the user's own IP or hostname
+  const pointDomain = async () => {
+    const target = targetDraft.trim();
+    if (!target) { setError('Enter an IP address or hostname.'); return; }
+    if (!displayDomain) return;
+    setBusy(true);
+    setError('');
+    try {
+      const list = await api(`/records?name=${encodeURIComponent(displayDomain)}`);
+      const existing = (list.records || []).filter((r: any) => r.type === 'A' && r.name === displayDomain);
+      for (const r of existing) {
+        await api(`/records/${r.id}`, { method: 'DELETE' });
+      }
+      await api('/records', { method: 'POST', body: JSON.stringify({ type: 'A', name: displayDomain, content: target, ttl: 300, proxied: false }) });
+      toast.saved('Domain is pointing at the new target', `${displayDomain} → ${target}`);
+      setTargetDraft('');
       await refresh(true);
     } catch (e) {
       setError((e as Error).message);
@@ -1086,8 +1085,23 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           </button>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 14, flexWrap: 'wrap' }}>
+          <input
+            className={styles.input}
+            placeholder="point your domain at an IP or hostname (e.g. 41.75.184.138)"
+            aria-label="Domain target IP or hostname"
+            value={targetDraft}
+            onChange={(e) => setTargetDraft(e.target.value)}
+            style={{ flex: 1, minWidth: 240 }}
+            onKeyDown={(e) => { if (e.key === 'Enter') pointDomain(); }}
+          />
+          <button className={styles.ovBtn} onClick={pointDomain} disabled={busy}>
+            Point domain
+          </button>
+        </div>
+
         {/* ── Set up your domain (collapsible) ── */}
-        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>Set up your domain</div>
             <button onClick={() => setSetupOpen(!setupOpen)} aria-expanded={setupOpen} title={setupOpen ? 'Collapse the setup wizard' : 'Show the setup wizard'} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -1204,7 +1218,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
 
       {/* User's domain selector */}
       {userDomains.length > 0 && (
-        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+        <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
             <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Your domains
           </div>
@@ -1228,7 +1242,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* ── Managed DNS (DNS hosting) — one switch, then records are written for you ── */}
-      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
           <Globe size={20} style={{ color: 'var(--accent-primary)' }} /> Managed DNS (DNS hosting)
         </div>
@@ -1390,7 +1404,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               </p>
             )}
             {nsVerifyResult && (
-              <pre style={{ marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+              <pre style={{ marginTop: 10, whiteSpace: 'pre-wrap', fontFamily: 'inherit', padding: '10px 0', background: 'transparent' }}>
                 {nsVerifyResult}
               </pre>
             )}
@@ -1407,7 +1421,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       )}
 
       {/* Add record */}
-      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}>
           <Plus size={20} style={{ color: 'var(--accent-primary)' }} /> Add DNS record
         </div>
@@ -1441,7 +1455,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* Record list */}
-      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Globe size={20} style={{ color: 'var(--accent-primary)' }} /> DNS records for {displayDomain}</span>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -1490,7 +1504,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
           </p>
         )}
         {importResult && (
-          <pre style={{ marginTop: 0, marginBottom: 12, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+          <pre style={{ marginTop: 0, marginBottom: 12, whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: 12, padding: '10px 0', background: 'transparent' }}>
             {importResult}
           </pre>
         )}
@@ -1527,7 +1541,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Email setup: MX, SPF, DKIM, DMARC ── */}
-      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 16, fontWeight: 600, color: 'var(--text-primary)' }}><Mail size={20} style={{ color: 'var(--accent-primary)' }} /> Email DNS & SPF merge</span>
           <button className={styles.buttonInline} onClick={() => setEmailOpen(!emailOpen)} aria-expanded={emailOpen} title={emailOpen ? 'Collapse Email DNS' : 'Expand Email DNS'} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1545,23 +1559,42 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
               <strong> One SPF record only</strong> — the engine merges your mechanisms into the existing v=spf1 record instead of writing a second one (which would silently break mail).
             </p>
 
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
-              <div>
-                <div className={styles.iconLabel}>Provider</div>
-                <select className={styles.select} value={emailProvider} onChange={(e) => {
-                  const p = EMAIL_PROVIDERS.find(x => x.id === e.target.value);
-                  if (p) {
-                    setEmailProvider(e.target.value);
-                    setMxHost(p.mxHost);
-                    setMxPriority(String(p.mxPriority));
-                    setSpfMechanisms(p.spfMechs.join(' '));
-                    setDkimSelector(p.dkimSelector);
-                    setDmarcPolicy(p.dmarcPolicy);
-                  }
-                }}>
-                  <option value="">— Choose provider —</option>
-                  {EMAIL_PROVIDERS.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+            <div style={{ marginBottom: 16 }}>
+              <div className={styles.iconLabel}>Provider</div>
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 6 }}>
+                {EMAIL_PROVIDERS.map(p => {
+                  const active = emailProvider === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        setEmailProvider(p.id);
+                        setMxHost(p.mxHost);
+                        setMxPriority(String(p.mxPriority));
+                        setSpfMechanisms(p.spfMechs.join(' '));
+                        setDkimSelector(p.dkimSelector);
+                        setDmarcPolicy(p.dmarcPolicy);
+                      }}
+                      aria-pressed={active}
+                      title={active ? `${p.name} selected` : `Use ${p.name}`}
+                      style={{
+                        padding: '12px 20px',
+                        borderRadius: 12,
+                        border: active ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
+                        background: active ? '#1f2937' : '#e5e7eb',
+                        color: active ? '#ffffff' : '#1f2937',
+                        fontWeight: 600,
+                        fontSize: 13.5,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        fontFamily: 'inherit',
+                      }}
+                    >
+                      {p.name}
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -1607,7 +1640,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
                 </div>
 
                 {emailResult && (
-                  <pre style={{ marginTop: 14, whiteSpace: 'pre-wrap', fontFamily: 'inherit', background: 'var(--bg-secondary, #f8fafc)', padding: '10px 14px', borderRadius: 8, border: '1px solid var(--border-color)' }}>
+                  <pre style={{ marginTop: 14, whiteSpace: 'pre-wrap', fontFamily: 'inherit', padding: '10px 0', background: 'transparent' }}>
                     {emailResult}
                   </pre>
                 )}
@@ -1618,7 +1651,7 @@ export const DomainSettingsScreen: React.FC<DomainSettingsProps> = ({ domain, on
       </div>
 
       {/* ── Danger zone: delete the entire domain ── */}
-      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid var(--border-color)' }}>
+      <div style={{ marginTop: 28, paddingTop: 28, borderTop: '1px solid #cbd5e1' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Trash2 size={18} style={{ color: '#dc2626' }} /> Danger zone
         </div>
