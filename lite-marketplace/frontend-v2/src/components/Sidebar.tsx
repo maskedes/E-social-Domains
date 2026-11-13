@@ -43,7 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, setScreen }) =>
           <span className={styles.brandIcon}>
             <Globe size={16} />
           </span>
-          <span className={styles.brandText}>E-Social Domains</span>
+          <span className={styles.brandText}>E-Domains</span>
         </div>
 
         <div className={styles.scrollNav}>

@@ -116,14 +116,7 @@ export const AuthScreen: React.FC = () => {
         <div className={styles.container}>
             <div className={styles.card}>
                 <div className={styles.header}>
-                    <div className={styles.logoBadge} aria-hidden="true">
-                        <svg viewBox="0 0 24 24" width="26" height="26" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.6" />
-                            <ellipse cx="12" cy="12" rx="4.5" ry="10" stroke="currentColor" strokeWidth="1.6" />
-                            <path d="M2 12h20M4.5 6.5h15M4.5 17.5h15" stroke="currentColor" strokeWidth="1.6" />
-                        </svg>
-                    </div>
-                    <h1 className={styles.title}>E-Social Domains</h1>
+                    <img src="/logo.png" alt="E-Domains" className={styles.logoImg} />
                     <p className={styles.subtitle}>
                         Your digital identity — <strong>free domains</strong> for everyone
                     </p>
