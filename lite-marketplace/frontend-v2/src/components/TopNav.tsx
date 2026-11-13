@@ -66,7 +66,7 @@ export const TopNav: React.FC<TopNavProps> = ({ user, setScreen }) => {
             {t('welcomeTitle')}
           </h1>
           <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-            <em><strong>{t('freeDomains')}</strong></em>
+            <em>Your digital identity — <strong>{t('freeDomains')}</strong> for everyone</em>
           </span>
         </div>
         <div className={styles.topNavSearch}>
