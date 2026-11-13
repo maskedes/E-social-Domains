@@ -3,6 +3,7 @@ import { collection, query, where, onSnapshot, deleteDoc, doc, updateDoc } from 
 import { User } from 'firebase/auth';
 import { db } from '../firebase';
 import styles from './Screens.module.css';
+import dlg from '../components/Toast.module.css';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useToast } from '../components/Toast';
 import { Search, Loader2, Settings2, Download, Trash2 } from 'lucide-react';
@@ -24,6 +25,10 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moreOpen, setMoreOpen] = useState(false);
+  const [notesDomain, setNotesDomain] = useState<any | null>(null);
+  const [notesText, setNotesText] = useState('');
+  const [tagsText, setTagsText] = useState('');
+  const [savingNotes, setSavingNotes] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -59,6 +64,30 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
       toast.deleted('Domain deleted', `${d.name} was removed from your account.`);
     } catch (e) {
       toast.error('Delete failed', (e as Error).message || 'Firestore rules may block deletes — allow delete on the domains collection in the Firebase console.');
+    }
+  };
+
+  // ── Labels & notes editor (per-domain, saved to Firestore) ──────────
+  const openNotes = (d: any) => {
+    setNotesDomain(d);
+    setNotesText(d.notes || '');
+    setTagsText((Array.isArray(d.tags) ? d.tags.join(' ') : (d.tags || d.group || '')) + '');
+  };
+
+  const saveNotes = async () => {
+    if (!notesDomain) return;
+    setSavingNotes(true);
+    try {
+      await updateDoc(doc(db, 'domains', notesDomain.id), {
+        notes: notesText.trim(),
+        tags: tagsText.trim() ? tagsText.trim().split(/\s+/) : [],
+      });
+      toast.saved('Notes saved', `${notesDomain.name} — labels & notes updated.`);
+      setNotesDomain(null);
+    } catch (e) {
+      toast.error('Save failed', (e as Error).message || 'Firestore rules may block updates on the domains collection.');
+    } finally {
+      setSavingNotes(false);
     }
   };
 
@@ -417,18 +446,18 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
                   <div className={styles.dColLabels}>
                     <button
                       className={styles.dLabelsBtn}
-                      title={domain.notes || 'No labels or notes'}
+                      title={domain.notes || 'Add labels or notes'}
+                      onClick={() => openNotes(domain)}
                     >
-                      <Settings2 size={15} /> Labels &amp; notes
+                      <Settings2 size={15} /> {domain.notes || (domain.tags?.length ? domain.tags.join(' ') : '') || 'Labels & notes'}
                     </button>
                     <button
-                      className={styles.dLabelsBtn}
+                      className={styles.dDeleteCard}
                       onClick={() => handleDeleteDomain(domain)}
                       disabled={loading}
                       title="Delete this domain"
-                      style={{ color: '#dc2626', borderColor: '#fecaca' }}
                     >
-                      <Trash2 size={15} /> Delete
+                      <Trash2 size={14} /> Delete
                     </button>
                   </div>
                 </div>
@@ -440,6 +469,81 @@ export const DomainListScreen: React.FC<DomainListProps> = ({ user, onOpenSettin
         {filteredDomains.length > 0 && (
           <div className={styles.pagination}>
             <button className={styles.pageBtn}>1</button>
+          </div>
+        )}
+
+        {/* Labels & notes editor — small popout card */}
+        {notesDomain && (
+          <div className={dlg.overlay} onClick={() => setNotesDomain(null)}>
+            <div
+              className={dlg.dialog}
+              onClick={(e) => e.stopPropagation()}
+              role="dialog"
+              aria-modal="true"
+              style={{ textAlign: 'left' }}
+            >
+              <div className={`${dlg.dlgIcon} ${dlg.primary}`}>
+                <Settings2 size={22} />
+              </div>
+              <h3 className={dlg.dlgTitle}>{notesDomain.name}</h3>
+              <p className={dlg.dlgMessage}>
+                Labels and notes are saved to this domain and visible in the list, filters and CSV export.
+              </p>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary, #64748b)', marginBottom: 4 }}>
+                Labels / tags (space-separated)
+              </label>
+              <input
+                value={tagsText}
+                onChange={(e) => setTagsText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') saveNotes(); }}
+                placeholder="e.g. work blog client1"
+                autoFocus
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  fontSize: 13.5,
+                  fontFamily: 'inherit',
+                  marginBottom: 12,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary, #64748b)', marginBottom: 4 }}>
+                Notes
+              </label>
+              <textarea
+                value={notesText}
+                onChange={(e) => setNotesText(e.target.value)}
+                placeholder="Anything you want to remember about this domain…"
+                rows={4}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: 10,
+                  border: '1px solid var(--border-color, #e2e8f0)',
+                  fontSize: 13.5,
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  marginBottom: 16,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+              <div className={dlg.dlgActions}>
+                <button className={dlg.btnCancel} onClick={() => setNotesDomain(null)}>
+                  Cancel
+                </button>
+                <button
+                  className={dlg.btnConfirm}
+                  onClick={saveNotes}
+                  disabled={savingNotes}
+                >
+                  {savingNotes ? 'Saving…' : 'Save notes'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
     </div>

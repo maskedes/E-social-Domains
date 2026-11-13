@@ -6,9 +6,10 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
 } from 'firebase/auth';
-import { ShieldCheck, ShieldCheckIcon, KeyRound, X, Check } from 'lucide-react';
+import { ShieldCheck, KeyRound, Check } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import s from './AccountExtras.module.css';
+import dlg from './Toast.module.css';
 
 /* ── Two-factor authentication section (Firebase MFA, TOTP) ── */
 /* Shows current enrollment status; enabling requires TOTP MFA to be active in
@@ -21,6 +22,8 @@ export const TwoFactorSection: React.FC<{ user: FirebaseUser }> = ({ user }) => 
   const [secret, setSecret] = useState<string | null>(null);
   const [code, setCode] = useState('');
   const [justEnrolled, setJustEnrolled] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pw, setPw] = useState('');
 
   // Reload enrolled factors each time the account screen mounts
   useEffect(() => {
@@ -32,26 +35,38 @@ export const TwoFactorSection: React.FC<{ user: FirebaseUser }> = ({ user }) => 
     }
   }, [user]);
 
-  const beginEnrollment = async () => {
+  const beginEnrollment = () => {
+    setError(null);
+    setPw('');
+    setPwOpen(true);
+  };
+
+  const submitPassword = async () => {
+    if (!pw) return;
     setBusy('enroll');
     setError(null);
     try {
-      // re-authenticate first (do whatever the user types; password field used again)
-      const pw = window.prompt('Re-enter your password to start 2FA enrollment:');
-      if (!pw) { setBusy(null); return; }
+      // re-authenticate first (Firebase requires a fresh login before MFA enrollment)
       const cred = EmailAuthProvider.credential(user.email || '', pw);
       await reauthenticateWithCredential(user, cred);
 
       const session = await multiFactor(user).getSession();
       const gen = await TotpMultiFactorGenerator.generateSecret(session as any);
       setSecret(gen.secretKey); // base32 secret, typeable into any TOTP app
+      setPwOpen(false);
+      setPw('');
     } catch (e) {
       const msg = (e as Error).message;
-      setError(
-        /operation-required|mfa|multi-factor|not-en|disabled|not enabled/i.test(msg)
-          ? `${t('twoFactorMfaFailed')}\n\n${t('twoFactorConsoleHint')}`
-          : msg
-      );
+      if (/invalid-password|credential|wrong/i.test(msg)) {
+        setError('Incorrect password — try again.');
+        setPwOpen(false);
+      } else if (/operation-required|mfa|multi-factor|not-en|disabled|not enabled/i.test(msg)) {
+        setError(`${t('twoFactorMfaFailed')}\n\n${t('twoFactorConsoleHint')}`);
+        setPwOpen(false);
+      } else {
+        setError(msg);
+      }
+    } finally {
       setBusy(null);
     }
   };
@@ -62,7 +77,6 @@ export const TwoFactorSection: React.FC<{ user: FirebaseUser }> = ({ user }) => 
     setBusy('enroll');
     setError(null);
     try {
-      const session = await multiFactor(user).getSession();
       const secretObj = { secretKey: secret, generateQrCodeUrl: () => '' } as any;
       const assertion = TotpMultiFactorGenerator.assertionForEnrollment(
         secretObj,
@@ -169,6 +183,58 @@ export const TwoFactorSection: React.FC<{ user: FirebaseUser }> = ({ user }) => 
       )}
 
       {error && <div className={s.connectError} style={{ whiteSpace: 'pre-wrap', width: '100%' }}>{error}</div>}
+
+      {/* Password re-auth dialog — same card style as the delete confirmation */}
+      {pwOpen && (
+        <div className={dlg.overlay} onClick={() => { setPwOpen(false); setPw(''); }}>
+          <div
+            className={dlg.dialog}
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className={`${dlg.dlgIcon} ${dlg.primary}`}>
+              <ShieldCheck size={22} />
+            </div>
+            <h3 className={dlg.dlgTitle}>Confirm it's you</h3>
+            <p className={dlg.dlgMessage}>
+              Re-enter your password to start 2FA enrollment.
+            </p>
+            <input
+              type="password"
+              autoFocus
+              placeholder="Password"
+              value={pw}
+              onChange={(e) => setPw(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') submitPassword(); if (e.key === 'Escape') { setPwOpen(false); setPw(''); } }}
+              style={{
+                width: '100%',
+                padding: '10px 14px',
+                borderRadius: 10,
+                border: '1px solid var(--border-color, #e2e8f0)',
+                fontSize: 13.5,
+                fontFamily: 'inherit',
+                marginBottom: 16,
+                outline: 'none',
+                boxSizing: 'border-box',
+              }}
+            />
+            <div className={dlg.dlgActions}>
+              <button className={dlg.btnCancel} onClick={() => { setPwOpen(false); setPw(''); }}>
+                Cancel
+              </button>
+              <button
+                className={dlg.btnConfirm}
+                onClick={submitPassword}
+                disabled={busy === 'enroll' || !pw}
+                autoFocus
+              >
+                {busy === 'enroll' ? 'Please wait…' : 'Continue'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

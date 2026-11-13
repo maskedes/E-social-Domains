@@ -775,6 +775,31 @@
   color: var(--accent-primary, #2563eb);
 }
 
+/* Small red card for the per-row Delete action — easy to spot */
+.dDeleteCard {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #fecaca;
+  background: #fff5f5;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.dDeleteCard:hover {
+  background: #fee2e2;
+}
+
+.dDeleteCard:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .dSortArrow {
   cursor: pointer;
   font-size: 12px;
