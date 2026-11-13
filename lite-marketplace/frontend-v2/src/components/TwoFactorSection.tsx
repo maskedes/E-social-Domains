@@ -122,17 +122,17 @@ export const TwoFactorSection: React.FC<{ user: FirebaseUser }> = ({ user }) => 
   }
 
   return (
-    <div className={s.settingRow}>
+    <div className={s.settingRow} style={{ flexWrap: 'wrap' }}>
       <div className={s.settingInfo}>
         <span className={s.settingTitle}>{t('twoFactor')}</span>
         <span className={s.settingDesc}>{enrolled ? t('twoFactorEnabled') : t('twoFactorDesc')}</span>
       </div>
       {!enrolled ? (
-        <button className={s.actionMini} onClick={beginEnrollment} disabled={busy !== null}>
+        <button className={s.actionMini} style={{ flexShrink: 0 }} onClick={beginEnrollment} disabled={busy !== null}>
           {busy === 'enroll' ? t('twoFactorTesting') : t('twoFactorEnable')}
         </button>
       ) : (
-        <button className={s.actionMini} style={{ color: '#ef4444', borderColor: '#fecaca', background: '#fff5f5' }} onClick={disable} disabled={busy !== null}>
+        <button className={s.actionMini} style={{ flexShrink: 0, color: '#ef4444', borderColor: '#fecaca', background: '#fff5f5' }} onClick={disable} disabled={busy !== null}>
           {busy === 'disable' ? t('twoFactorTesting') : t('twoFactorDisable')}
         </button>
       )}

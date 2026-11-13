@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Globe, Bell, Moon, Sun, ChevronDown, User as UserIcon, Settings, LogOut } from 'lucide-react';
+import { Search, Globe, Bell, Moon, Sun, ChevronDown, User as UserIcon, Settings, LogOut, CheckCircle2, Globe2 } from 'lucide-react';
 import styles from '../AppLayout.module.css';
 import { User } from 'firebase/auth';
 import { auth } from '../firebase';
@@ -104,10 +104,21 @@ export const TopNav: React.FC<TopNavProps> = ({ user, setScreen }) => {
             <div className={styles.notifBadge} />
           </button>
           {activeDropdown === 'notif' && (
-            <div className={styles.dropdownMenu} style={{ width: '240px', right: 0 }}>
+            <div className={styles.dropdownMenu} style={{ width: '260px', right: 0 }}>
               <div className={styles.dropdownHeader}>{t('notifications')}</div>
-              <div className={styles.dropdownItem}>System check complete</div>
-              <div className={styles.dropdownItem}>Domain registry updated</div>
+              <div className={styles.dropdownItem} style={{ cursor: 'pointer' }} onClick={() => navigateTo('dashboard')}>
+                <CheckCircle2 size={15} style={{ marginRight: 8, color: '#22c55e' }} /> System check complete
+              </div>
+              <div className={styles.dropdownItem} style={{ cursor: 'pointer' }} onClick={() => navigateTo('domain-list')}>
+                <Globe2 size={15} style={{ marginRight: 8, color: '#0ea5e9' }} /> Domain registry updated
+              </div>
+              <div
+                className={styles.dropdownItem}
+                style={{ cursor: 'pointer', fontWeight: 700, borderTop: '1px solid var(--border-color, #e2e8f0)' }}
+                onClick={() => navigateTo('notifications')}
+              >
+                See all notifications
+              </div>
             </div>
           )}
         </div>

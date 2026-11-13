@@ -12,6 +12,7 @@ import { DomainListScreen } from './screens/DomainListScreen';
 import { DomainSettingsScreen } from './screens/DomainSettingsScreen';
 import { SettingsScreen } from './screens/SettingsScreen';
 import { AccountScreen } from './screens/AccountScreen';
+import { NotificationsScreen } from './screens/NotificationsScreen';
 import { EditProfileScreen } from './screens/EditProfileScreen';
 import { CreatorProgramScreen } from './screens/CreatorProgramScreen';
 import { LanguageProvider } from './contexts/LanguageProvider';
@@ -63,6 +64,7 @@ const AppContent: React.FC = () => {
       case 'domain-settings': return <DomainSettingsScreen domain={selectedDomain} onBack={() => setCurrentScreen('domain-list')} />;
       case 'settings': return <SettingsScreen user={user} />;
       case 'account': return <AccountScreen user={user} setScreen={setCurrentScreen} />;
+      case 'notifications': return <NotificationsScreen setScreen={setCurrentScreen} />;
       case 'edit-profile': return <EditProfileScreen user={user} setScreen={setCurrentScreen} />;
       case 'subscriptions': return <ComingSoonScreen title={t('subscriptions')} />;
       case 'buy-slots': return <ComingSoonScreen title={t('buySlots')} />;
