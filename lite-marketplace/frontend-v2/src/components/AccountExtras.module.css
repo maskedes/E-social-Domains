@@ -150,9 +150,22 @@
 }
 
 .connectError {
+  /* Always fits inside the row/card: full width, soft red pill, text wraps */
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   font-size: 12px;
-  color: #ef4444;
-  text-align: center;
+  line-height: 1.5;
+  color: #dc2626;
+  text-align: left;
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Language selection */
