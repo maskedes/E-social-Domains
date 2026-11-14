@@ -34,11 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, setScreen }) =>
         aria-label="Main navigation"
         aria-expanded={false}
       >
-        <div className={styles.brand}>
-          <span className={styles.brandIcon} aria-hidden="true">
-            <span style={{ fontWeight: 800, fontSize: 14, lineHeight: 1, fontFamily: 'inherit' }}>E</span>
-          </span>
-        </div>
+        <div style={{ height: 8 }} aria-hidden="true" />
 
         <div className={styles.scrollNav}>
           {navItems.map((item) => (
