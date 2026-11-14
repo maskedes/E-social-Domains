@@ -62,10 +62,8 @@ export const TopNav: React.FC<TopNavProps> = ({ user, setScreen }) => {
     <header className={styles.topNav}>
       <div className={styles.topNavLeft}>
         <div style={{ marginRight: '24px', display: 'flex', flexDirection: 'column' }}>
-          <h1 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
-            {t('welcomeTitle')}
-          </h1>
-          <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+          <img src="/logo.png" alt="E-Domains" style={{ height: '26px', width: 'auto', objectFit: 'contain', margin: 0 }} />
+          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
             <em>Your digital identity — <strong>{t('freeDomains')}</strong> for everyone</em>
           </span>
         </div>

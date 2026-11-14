@@ -15,7 +15,6 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, setScreen }) => {
   const { t } = useLanguage();
-  const [expanded, setExpanded] = useState(false);
 
   const navItems = [
     { id: 'dashboard', label: t('dashboard'), icon: LayoutDashboard },
@@ -29,21 +28,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentScreen, setScreen }) =>
   ];
 
   return (
-    <div
-      className={`${styles.sidebar} ${expanded ? styles.hover : ''}`}
-      onMouseEnter={() => setExpanded(true)}
-      onMouseLeave={() => setExpanded(false)}
-    >
+    <div className={styles.sidebar}>
       <nav
-        className={`${styles.sidebarPanel} ${expanded ? styles.expanded : styles.collapsed}`}
+        className={`${styles.sidebarPanel} ${styles.collapsed}`}
         aria-label="Main navigation"
-        aria-expanded={expanded}
+        aria-expanded={false}
       >
         <div className={styles.brand}>
-          <span className={styles.brandIcon}>
-            <Globe size={16} />
+          <span className={styles.brandIcon} aria-hidden="true">
+            <span style={{ fontWeight: 800, fontSize: 14, lineHeight: 1, fontFamily: 'inherit' }}>E</span>
           </span>
-          <span className={styles.brandText}>E-Domains</span>
         </div>
 
         <div className={styles.scrollNav}>
